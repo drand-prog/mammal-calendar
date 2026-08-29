@@ -8,8 +8,6 @@ export type ContentFields = {
   subtitle: string;
   wheelCaptionDefault: string;
   searchPlaceholder: string;
-  emptyHintPrefix: string;
-  emptyHintSuffix: string;
   faqEyebrow: string;
   faqHeading: string;
 };
@@ -27,8 +25,6 @@ const CONTENT_FIELDS: {
   { key: "subtitle", label: "Subtitle", max: 300, multiline: true },
   { key: "wheelCaptionDefault", label: "Wheel caption, shown before anything is selected", max: 400, multiline: true },
   { key: "searchPlaceholder", label: "Search box placeholder", max: 100 },
-  { key: "emptyHintPrefix", label: '"Nothing selected" text, before the species count', max: 300, multiline: true },
-  { key: "emptyHintSuffix", label: '"Nothing selected" text, after the species count', max: 150 },
   { key: "faqEyebrow", label: "FAQ section eyebrow", max: 80 },
   { key: "faqHeading", label: "FAQ section heading", max: 100 },
 ];

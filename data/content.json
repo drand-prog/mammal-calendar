@@ -4,8 +4,6 @@
   "subtitle": "Every mammal has a day. Its clade sets the month; its own name sets the hour, minute, and date. Search a species below to find its moment on the wheel.",
   "wheelCaptionDefault": "The alphabet ring marks days A–Z around each month; the bars beyond it show how many species share each day, relative to that month's busiest one. Choose a mammal, or click the ring itself, to see who's celebrating.",
   "searchPlaceholder": "Common or scientific name… try “narwhal”",
-  "emptyHintPrefix": "No specimen selected yet. Every one of the twelve clades keeps its own month — search above, or browse a date, to see where any of the",
-  "emptyHintSuffix": "mammals in the index falls.",
   "faqEyebrow": "Questions",
   "faqHeading": "Frequently Asked Questions"
 }

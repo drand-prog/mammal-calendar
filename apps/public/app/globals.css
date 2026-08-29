@@ -119,6 +119,7 @@ img { max-width: 100%; }
   @media (max-width: 880px){
     .stage{ grid-template-columns: 1fr; }
   }
+  .left-col{ display:flex; flex-direction:column; gap:1.25rem; }
 
   /* ---- Wheel ---- */
   .wheel-panel{
@@ -490,14 +491,6 @@ img { max-width: 100%; }
     padding-top:.9rem;
   }
   .footnote b{ color:var(--text); font-weight:600; }
-
-  .empty-hint{
-    padding:1.5rem;
-    color:var(--text-muted);
-    font-size:.9rem;
-    line-height:1.6;
-    text-align:center;
-  }
 
   .legend{
     padding:1.1rem 1.25rem;

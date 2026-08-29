@@ -41,8 +41,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   // [common name, Genus, species, cladeIndex, fact?, holidayOverride?]
   var DATA = SPECIES_DATA;
 
-  document.getElementById("totalCount").textContent = DATA.length;
-
   // ---------- Letter math ----------
   function letterIndex(ch){ return ch.toUpperCase().charCodeAt(0) - 64; } // A=1..Z=26
 
@@ -285,7 +283,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   }
 
   // ---------- Fixed holiday markers (Groundhog Day, Mole Day, ...) ----------
-  var R_MARK = R_HIST_MAX + 14;
   function starPath(){ return "M0,-6.5 L1.9,-2.1 L6.6,-2 L2.9,1.1 L4.2,5.7 L0,3 L-4.2,5.7 L-2.9,1.1 L-6.6,-2 L-1.9,-2.1 Z"; }
 
   function fixedEntries(){ return DATA.filter(function(e){ return e[5] && e[5].holiday; }); }
@@ -295,11 +292,10 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     fixedEntries().forEach(function(entry){
       var r = compute(entry);
       var ang = r.month*wedgeAngle + ((r.day-0.5)/26)*wedgeAngle;
-      var rim = polar(CX,CY,R_HIST_MAX,ang);
-      var tip = polar(CX,CY,R_MARK-7,ang);
-      svg.appendChild(el("line",{x1:rim.x.toFixed(2),y1:rim.y.toFixed(2),x2:tip.x.toFixed(2),y2:tip.y.toFixed(2),stroke:"var(--clay)","stroke-width":1.4}));
 
-      var p = polar(CX,CY,R_MARK,ang);
+      // Sits right on the alphabet ring's own tick mark for that day, not
+      // out beyond the histogram.
+      var p = polar(CX,CY,R_TICK_OUT,ang);
       var g = el("g",{transform:"translate("+p.x.toFixed(2)+","+p.y.toFixed(2)+")",style:"cursor:pointer;"});
       g.appendChild(el("path",{d:starPath(),fill:"var(--clay)",stroke:"var(--surface)","stroke-width":1}));
       var titleEl = document.createElementNS(NS,"title");
@@ -361,7 +357,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   var input = document.getElementById("search");
   var resultsBox = document.getElementById("results");
   var specimen = document.getElementById("specimen");
-  var emptyHint = document.getElementById("emptyHint");
   var activeIndex = -1;
   var currentMatches = [];
 
@@ -449,7 +444,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     input.value = entry[0];
     resultsBox.innerHTML = "";
 
-    emptyHint.style.display = "none";
     specimen.classList.add("show");
 
     document.getElementById("outCommon").textContent = r.common;

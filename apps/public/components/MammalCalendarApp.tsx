@@ -12,8 +12,6 @@ export type SiteContent = {
   subtitle: string;
   wheelCaptionDefault: string;
   searchPlaceholder: string;
-  emptyHintPrefix: string;
-  emptyHintSuffix: string;
   faqEyebrow: string;
   faqHeading: string;
 };
@@ -36,8 +34,6 @@ function renderBody(content: SiteContent): string {
     .replace(/__SUBTITLE__/g, escapeHtml(content.subtitle))
     .replace(/__WHEEL_CAPTION_DEFAULT__/g, escapeHtml(content.wheelCaptionDefault))
     .replace(/__SEARCH_PLACEHOLDER__/g, escapeHtml(content.searchPlaceholder))
-    .replace(/__EMPTY_HINT_PREFIX__/g, escapeHtml(content.emptyHintPrefix))
-    .replace(/__EMPTY_HINT_SUFFIX__/g, escapeHtml(content.emptyHintSuffix))
     .replace(/__FAQ_EYEBROW__/g, escapeHtml(content.faqEyebrow))
     .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading));
 }

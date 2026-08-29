@@ -10,8 +10,6 @@ const FIELDS: Record<string, number> = {
   subtitle: 300,
   wheelCaptionDefault: 400,
   searchPlaceholder: 100,
-  emptyHintPrefix: 300,
-  emptyHintSuffix: 150,
   faqEyebrow: 80,
   faqHeading: 100,
 };
