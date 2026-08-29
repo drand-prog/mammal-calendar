@@ -1,0 +1,26 @@
+[
+  {
+    "q": "How is a mammal's date calculated?",
+    "a": "The month comes from its clade — Primates get January, Rodentia gets February, and so on through all twelve. The day is the first letter of the species name (A = the 1st, Z = the 26th). The hour is the first letter of the genus name (A = 0:00 … W = 22:00, X/Y/Z = 24:00), and the minute is the last letter of the species name (A = :01 … Z = :26)."
+  },
+  {
+    "q": "Why do Groundhog Day and Mole Day look hard-coded?",
+    "a": "They're two deliberate exceptions. The Alaska Marmot (Marmota broweri) is pinned to February 2 to match Groundhog Day, and the Large Japanese Mole (Mogera wogura) is pinned to October 23rd at 6:02 to match Mole Day's nod to Avogadro's number. Both are marked with a star on the wheel and flagged on their specimen card."
+  },
+  {
+    "q": "Where does the species list come from?",
+    "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
+  },
+  {
+    "q": "Why do pangolins, treeshrews, and colugos share other clades' months?",
+    "a": "The twelve clades here don't cover every mammalian order — Pholidota (pangolins), Scandentia (treeshrews), and Dermoptera (colugos) were left out of the original scheme. Rather than dropping them, pangolins were folded into Carnivora's month (their closest relatives), and treeshrews and colugos into Primates' month."
+  },
+  {
+    "q": "What do the bars around the rim mean?",
+    "a": "They're a histogram of how many species land on each day. “Scaled by month” normalizes each clade to its own busiest day, so every clade's shape is visible regardless of size. “Unscaled” shows true relative sizes — Rodentia and Chiroptera dwarf everything else. Hover a bar for the exact count, or click it to browse that date."
+  },
+  {
+    "q": "Can two mammals share the exact same date and time?",
+    "a": "Yes — any two species in the same clade whose species name starts and ends with the same letters, and whose genus starts with the same letter, land on the identical minute. Browse a date below the wheel to see everyone who shares it."
+  }
+]
