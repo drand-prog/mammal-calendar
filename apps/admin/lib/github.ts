@@ -1,23 +1,27 @@
 const OWNER = process.env.GITHUB_REPO_OWNER || "drand-prog";
 const REPO = process.env.GITHUB_REPO_NAME || "mammal-calendar";
 const BRANCH = process.env.GITHUB_REPO_BRANCH || "main";
-const FAQS_PATH = "data/faqs.json";
 
 export type Faq = { q: string; a: string };
 
 /**
- * Commits a new data/faqs.json to the repo via the GitHub REST API. This is
- * the "save" for the admin panel: Vercel's GitHub integration picks up the
- * push and redeploys automatically, so a save takes roughly as long as a
- * normal deploy to go live — not instant like the artifact version.
+ * Commits a new version of a data/*.json file to the repo via the GitHub
+ * REST API. This is the "save" for the admin panel: Vercel's GitHub
+ * integration picks up the push and redeploys BOTH the public and admin
+ * projects automatically, so a save takes roughly as long as a normal
+ * deploy to go live -- not instant.
  */
-export async function commitFaqs(faqs: Faq[]): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function commitJsonFile(
+  relativePath: string,
+  data: unknown,
+  commitMessage: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
     return { ok: false, error: "GITHUB_TOKEN is not configured on the server." };
   }
 
-  const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FAQS_PATH}`;
+  const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${relativePath}`;
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -31,12 +35,12 @@ export async function commitFaqs(faqs: Faq[]): Promise<{ ok: true } | { ok: fals
   }
   const current = (await getRes.json()) as { sha: string };
 
-  const content = JSON.stringify(faqs, null, 2) + "\n";
+  const content = JSON.stringify(data, null, 2) + "\n";
   const putRes = await fetch(apiBase, {
     method: "PUT",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({
-      message: `Update FAQs (${faqs.length} question${faqs.length === 1 ? "" : "s"}) via admin panel`,
+      message: commitMessage,
       content: Buffer.from(content, "utf-8").toString("base64"),
       sha: current.sha,
       branch: BRANCH,
@@ -49,4 +53,12 @@ export async function commitFaqs(faqs: Faq[]): Promise<{ ok: true } | { ok: fals
   }
 
   return { ok: true };
+}
+
+export async function commitFaqs(faqs: Faq[]) {
+  return commitJsonFile(
+    "data/faqs.json",
+    faqs,
+    `Update FAQs (${faqs.length} question${faqs.length === 1 ? "" : "s"}) via admin panel`
+  );
 }
