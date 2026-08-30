@@ -10,7 +10,6 @@ export type SiteContent = {
   eyebrow: string;
   title: string;
   subtitle: string;
-  wheelCaptionDefault: string;
   searchPlaceholder: string;
   faqEyebrow: string;
   faqHeading: string;
@@ -32,7 +31,6 @@ function renderBody(content: SiteContent): string {
   return BODY_HTML.replace(/__EYEBROW__/g, escapeHtml(content.eyebrow))
     .replace(/__TITLE__/g, escapeHtml(content.title))
     .replace(/__SUBTITLE__/g, escapeHtml(content.subtitle))
-    .replace(/__WHEEL_CAPTION_DEFAULT__/g, escapeHtml(content.wheelCaptionDefault))
     .replace(/__SEARCH_PLACEHOLDER__/g, escapeHtml(content.searchPlaceholder))
     .replace(/__FAQ_EYEBROW__/g, escapeHtml(content.faqEyebrow))
     .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading));

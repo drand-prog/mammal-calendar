@@ -107,9 +107,11 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   // Radii are scaled up from the original design (which left ~10% of the
   // viewBox as unused margin) so the wheel and histogram fill more of
   // their card, while still leaving a small buffer past R_HIST_MAX so an
-  // unscaled bar's stroke doesn't touch the edge.
+  // unscaled bar's stroke doesn't touch the edge. The hub has no label
+  // in it any more, so it's shrunk down to a small center mark, handing
+  // its radius back to the wedges.
   var CX = 450, CY = 450;
-  var R_OUTER = 288, R_TICK_OUT = 272, R_TICK_IN = 253, R_LABEL = 223, R_CLADE = 194, R_INNER = 118, R_HUB = 85;
+  var R_OUTER = 300, R_TICK_OUT = 278, R_TICK_IN = 251, R_LABEL = 210, R_CLADE = 169, R_INNER = 64, R_HUB = 46;
   var R_HIST_BASE = R_OUTER + 6;
   var HIST_BAR_UNIT = 34;       // a "scaled" bar's max reach
   var HIST_UNSCALED_MULT = 4;   // unscaled mode's tallest bar reaches 4x that
@@ -202,12 +204,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     // hub
     svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_INNER-6,class:"hub-ring"}));
     svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_HUB,class:"hub"}));
-    var hubT1 = el("text",{x:CX,y:CY-4,"text-anchor":"middle",class:"hub-text",style:"font-size:15px;"});
-    hubT1.textContent = "twelve";
-    svg.appendChild(hubT1);
-    var hubT2 = el("text",{x:CX,y:CY+15,"text-anchor":"middle",class:"hub-text",style:"font-size:15px;"});
-    hubT2.textContent = "clades";
-    svg.appendChild(hubT2);
 
     // needle (hidden until a mammal is chosen)
     var needleOrigin = "transform-origin:"+CX+"px "+CY+"px;";
@@ -623,8 +619,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     });
 
     pointNeedle(month, day);
-    document.getElementById("wheelCaption").innerHTML =
-      "<b>" + MONTH_NAMES[month] + " " + day + "</b> belongs to " + list.length + " mammal" + (list.length === 1 ? "" : "s") + " in the index.";
   }
 
   function browsePromptState(){

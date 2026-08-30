@@ -8,7 +8,6 @@ const FIELDS: Record<string, number> = {
   eyebrow: 80,
   title: 100,
   subtitle: 300,
-  wheelCaptionDefault: 400,
   searchPlaceholder: 100,
   faqEyebrow: 80,
   faqHeading: 100,
