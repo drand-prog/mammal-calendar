@@ -522,6 +522,7 @@ img { max-width: 100%; }
     color:var(--text-muted);
     font-size:.92rem;
     line-height:1.6;
+    white-space:pre-line;
   }
 
   .admin-section{ padding-bottom:.5rem; }
