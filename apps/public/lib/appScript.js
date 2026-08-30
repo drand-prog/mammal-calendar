@@ -9,20 +9,43 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   // ---------- Clade / month metadata ----------
   // index = calendar month (0 = January)
   var CLADES = [
-    { name:"Primates",           formal:"Primates",          month:0,  icon:iconPrimate },
-    { name:"Rodents",            formal:"Rodentia",          month:1,  icon:iconRodent },
-    { name:"Lagomorphs",         formal:"Lagomorpha",        month:2,  icon:iconLagomorph },
-    { name:"Monotremes",         formal:"Monotremata",       month:3,  icon:iconMonotreme },
-    { name:"Marsupials",         formal:"Marsupialia",       month:4,  icon:iconMarsupial },
-    { name:"Afroinsectiphiles",  formal:"Afroinsectiphilia", month:5,  icon:iconAfro },
-    { name:"Paenungulates",      formal:"Paenungulata",      month:6,  icon:iconPaenungulate },
-    { name:"Carnivorans",        formal:"Carnivora",         month:7,  icon:iconCarnivore },
-    { name:"Xenarthrans",        formal:"Xenarthra",         month:8,  icon:iconXenarthra },
-    { name:"Eulipotyphlans",     formal:"Eulipotyphla",      month:9,  icon:iconEulipotyphla },
-    { name:"Chiropterans",       formal:"Chiroptera",        month:10, icon:iconBat },
-    { name:"Ungulates",          formal:"Ungulata (incl. whales)", month:11, icon:iconUngulate }
+    { name:"Primates",           formal:"Primates",          month:0 },
+    { name:"Rodents",            formal:"Rodentia",          month:1 },
+    { name:"Lagomorphs",         formal:"Lagomorpha",        month:2 },
+    { name:"Monotremes",         formal:"Monotremata",       month:3 },
+    { name:"Marsupials",         formal:"Marsupialia",       month:4 },
+    { name:"Afroinsectiphiles",  formal:"Afroinsectiphilia", month:5 },
+    { name:"Paenungulates",      formal:"Paenungulata",      month:6 },
+    { name:"Carnivorans",        formal:"Carnivora",         month:7 },
+    { name:"Xenarthrans",        formal:"Xenarthra",         month:8 },
+    { name:"Eulipotyphlans",     formal:"Eulipotyphla",      month:9 },
+    { name:"Chiropterans",       formal:"Chiroptera",        month:10 },
+    { name:"Ungulates",          formal:"Ungulata (incl. whales)", month:11 }
   ];
   var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  // One emoji badge per month card, upper-right corner. April and June are
+  // fixed (egg for the only egg-laying mammals; rainbow for Afroinsectiphilia,
+  // which has no animal emoji of its own). Everywhere else with more than one
+  // plausible option, one is picked at random each time the page loads.
+  var MONTH_EMOJI = [
+    ["🐵","🐒","🦍","🦧"],                                            // January -- Primates
+    ["🐭","🐁","🐀","🐹","🐿️","🦫"],                                  // February -- Rodentia
+    ["🐰","🐇"],                                                      // March -- Lagomorpha
+    ["🥚"],                                                           // April -- Monotremata
+    ["🦘","🐨"],                                                      // May -- Marsupialia
+    ["🌈"],                                                           // June -- Afroinsectiphilia
+    ["🐘","🦣"],                                                      // July -- Paenungulata
+    ["🐺","🦊","🦁","🐯","🐻","🐼","🦭","🦡"],                          // August -- Carnivora
+    ["🦥"],                                                           // September -- Xenarthra
+    ["🦔"],                                                           // October -- Eulipotyphla
+    ["🦇"],                                                           // November -- Chiroptera
+    ["🦓","🦌","🦬","🐄","🐖","🐐","🐫","🦙","🦒","🦏","🦛","🐋","🐬"]   // December -- Ungulata
+  ];
+  function pickEmoji(month){
+    var options = MONTH_EMOJI[month];
+    return options[Math.floor(Math.random() * options.length)];
+  }
   // Highest day each month's clade can actually produce (see dayOf below):
   // February tops out at 29 (its own "leap day" code, AC), 30-day months
   // at 30, everything else at the full 31.
@@ -137,12 +160,14 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
       card.className = "month-card " + (i % 2 === 0 ? "stripe-a" : "stripe-b");
       card.setAttribute("data-month", clade.month);
 
+      var emojiEl = document.createElement("span");
+      emojiEl.className = "month-card-emoji";
+      emojiEl.setAttribute("aria-hidden", "true");
+      emojiEl.textContent = pickEmoji(clade.month);
+      card.appendChild(emojiEl);
+
       var head = document.createElement("div");
       head.className = "month-card-head";
-
-      var iconSvg = el("svg", {class:"month-icon", viewBox:"-10 -10 20 20", "aria-hidden":"true"});
-      clade.icon(iconSvg, el);
-      head.appendChild(iconSvg);
 
       var labels = document.createElement("div");
       labels.className = "month-card-labels";
@@ -330,22 +355,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
       container.appendChild(btn);
     });
   }
-
-  // ---------- Small clade icon glyphs (simple line marks, ~14px) ----------
-  function stroke(g, elFn, attrs){ attrs.fill = attrs.fill || "none"; attrs.stroke = attrs.stroke || "var(--text-muted)"; attrs["stroke-width"]=attrs["stroke-width"]||1.3; attrs["stroke-linecap"]="round"; g.appendChild(elFn("path", attrs)); }
-
-  function iconPrimate(g, elFn){ stroke(g, elFn, {d:"M-5,5 Q-5,-4 0,-4 Q5,-4 5,5 M-5,5 L-6,7 M5,5 L6,7 M-2,-4 L-2,-6 M2,-4 L2,-6"}); }
-  function iconRodent(g, elFn){ stroke(g, elFn, {d:"M-6,3 Q-6,-3 0,-3 Q7,-3 7,1 L3,1 M-2,-3 L-4,-6 M7,1 L9,0"}); }
-  function iconLagomorph(g, elFn){ stroke(g, elFn, {d:"M-2,2 Q-4,-6 -1,-7 Q1,-6 -1,1 M2,2 Q0,-7 3,-7 Q5,-6 1,1 M-3,3 Q0,6 3,3"}); }
-  function iconMonotreme(g, elFn){ g.appendChild(elFn("ellipse",{cx:0,cy:0,rx:5,ry:6.5,fill:"none",stroke:"var(--text-muted)","stroke-width":1.3})); }
-  function iconMarsupial(g, elFn){ stroke(g, elFn, {d:"M-6,-2 Q-6,4 0,5 Q6,4 6,-2 M-4,4 Q0,7 4,4"}); }
-  function iconAfro(g, elFn){ stroke(g, elFn, {d:"M-2,-4 Q-6,-4 -7,1 Q-6,4 -3,4 L4,4 Q6,4 6,1 Q6,-2 3,-2 L-2,-4 L-4,-7"}); }
-  function iconPaenungulate(g, elFn){ stroke(g, elFn, {d:"M-1,-6 Q-6,-6 -6,0 Q-6,5 -1,5 M-1,-6 Q3,-6 4,-2 L2,0 L4,2"}); }
-  function iconCarnivore(g, elFn){ stroke(g, elFn, {d:"M0,6 Q-5,3 -5,-1 Q-5,-4 -2,-4 Q0,-4 0,-1 Q0,-4 2,-4 Q5,-4 5,-1 Q5,3 0,6 M-2,-4 L-2,-6 M2,-4 L2,-6"}); }
-  function iconXenarthra(g, elFn){ stroke(g, elFn, {d:"M-6,3 Q-6,-5 0,-5 Q6,-5 6,3 M-6,3 L6,3 M-3,-5 L-3,3 M3,-5 L3,3 M0,-5 L0,3"}); }
-  function iconEulipotyphla(g, elFn){ stroke(g, elFn, {d:"M-5,4 Q-6,-4 0,-5 Q6,-5 5,3 M-5,-2 L-7,-3 M-4,-4 L-6,-6 M-2,-5 L-3,-7 M0,-5 L0,-7 M2,-5 L3,-7"}); }
-  function iconBat(g, elFn){ stroke(g, elFn, {d:"M0,1 Q-3,-4 -8,-2 Q-6,1 -3,1 Q-1,1 0,1 Q1,1 3,1 Q6,1 8,-2 Q3,-4 0,1"}); }
-  function iconUngulate(g, elFn){ stroke(g, elFn, {d:"M-3,5 L-4,-2 Q-4,-6 0,-6 Q4,-6 4,-2 L3,5 M-4,-2 L-6,-4 M4,-2 L6,-4"}); }
 
   buildMonthGrid();
   computeHistCounts();

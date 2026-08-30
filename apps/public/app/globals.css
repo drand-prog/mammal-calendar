@@ -132,6 +132,7 @@ img { max-width: 100%; }
     .month-grid{ grid-template-columns:repeat(2, 1fr); }
   }
   .month-card{
+    position:relative;
     border:1px solid var(--border);
     border-radius:3px;
     padding:.5rem .55rem .35rem;
@@ -143,8 +144,14 @@ img { max-width: 100%; }
   .month-card.stripe-a{ background:var(--stripe-a); }
   .month-card.stripe-b{ background:var(--stripe-b); }
   .month-card.active{ border-color:var(--clay); }
-  .month-card-head{ display:flex; align-items:center; gap:.4rem; }
-  .month-icon{ width:15px; height:15px; flex:none; opacity:.8; }
+  .month-card-emoji{
+    position:absolute;
+    top:.4rem;
+    right:.5rem;
+    font-size:1.05rem;
+    line-height:1;
+  }
+  .month-card-head{ padding-right:1.5rem; }
   .month-card-labels{ display:flex; flex-direction:column; line-height:1.2; min-width:0; }
   .month-card-name{
     font-family:"Barlow Condensed", sans-serif;
