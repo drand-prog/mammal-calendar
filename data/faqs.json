@@ -4,10 +4,6 @@
     "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
   },
   {
-    "q": "Why do pangolins, treeshrews, and colugos share other clades' months?",
-    "a": "The twelve clades here don't cover every mammalian order — Pholidota (pangolins), Scandentia (treeshrews), and Dermoptera (colugos) were left out of the original scheme. Rather than dropping them, pangolins were folded into Carnivora's month (their closest relatives), and treeshrews and colugos into Primates' month."
-  },
-  {
     "q": "What do the bars around the rim mean?",
     "a": "They're a histogram of how many species land on each day. “Scaled by month” normalizes each clade to its own busiest day, so every clade's shape is visible regardless of size. “Unscaled” shows true relative sizes — Rodentia and Chiroptera dwarf everything else. Hover a bar for the exact count, or click it to browse that date."
   },
