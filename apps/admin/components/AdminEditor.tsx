@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 export type ContentFields = {
-  eyebrow: string;
   title: string;
-  subtitle: string;
   searchPlaceholder: string;
   faqEyebrow: string;
   faqHeading: string;
@@ -19,9 +17,7 @@ const CONTENT_FIELDS: {
   max: number;
   multiline?: boolean;
 }[] = [
-  { key: "eyebrow", label: "Eyebrow (small label above the title)", max: 80 },
   { key: "title", label: "Title", max: 100 },
-  { key: "subtitle", label: "Subtitle", max: 300, multiline: true },
   { key: "searchPlaceholder", label: "Search box placeholder", max: 100 },
   { key: "faqEyebrow", label: "FAQ section eyebrow", max: 80 },
   { key: "faqHeading", label: "FAQ section heading", max: 100 },

@@ -7,9 +7,7 @@ import { BODY_HTML } from "@/lib/bodyMarkup";
 import { initMammalCalendarApp } from "@/lib/appScript";
 
 export type SiteContent = {
-  eyebrow: string;
   title: string;
-  subtitle: string;
   searchPlaceholder: string;
   faqEyebrow: string;
   faqHeading: string;
@@ -28,9 +26,7 @@ function escapeHtml(s: string): string {
 // page or (worse) inject markup, even though this is a trusted, password-
 // gated field rather than public user input.
 function renderBody(content: SiteContent): string {
-  return BODY_HTML.replace(/__EYEBROW__/g, escapeHtml(content.eyebrow))
-    .replace(/__TITLE__/g, escapeHtml(content.title))
-    .replace(/__SUBTITLE__/g, escapeHtml(content.subtitle))
+  return BODY_HTML.replace(/__TITLE__/g, escapeHtml(content.title))
     .replace(/__SEARCH_PLACEHOLDER__/g, escapeHtml(content.searchPlaceholder))
     .replace(/__FAQ_EYEBROW__/g, escapeHtml(content.faqEyebrow))
     .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading));

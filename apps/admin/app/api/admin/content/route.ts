@@ -5,9 +5,7 @@ import { commitJsonFile } from "@/lib/github";
 // Field -> max length. Keeps this in one place so the editor form and the
 // server-side check agree on limits.
 const FIELDS: Record<string, number> = {
-  eyebrow: 80,
   title: 100,
-  subtitle: 300,
   searchPlaceholder: 100,
   faqEyebrow: 80,
   faqHeading: 100,
