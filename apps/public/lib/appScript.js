@@ -213,9 +213,13 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   }
 
   // ---------- Species-count heat map ----------
-  // Every day box is shaded relative to the single busiest day anywhere on
-  // the calendar, so the shading reflects true relative density.
-  var DAY_COUNTS = null, DAY_GLOBAL_MAX = 0;
+  // Three display modes, mirroring the old histogram's:
+  //  - "hidden":   no shading at all
+  //  - "scaled":   shading relative to that MONTH's own busiest day
+  //                (every clade's shape is visible, regardless of size)
+  //  - "unscaled": shading relative to the single busiest day anywhere
+  //                (true relative density — smaller clades read as faint)
+  var DAY_COUNTS = null, DAY_GLOBAL_MAX = 0, DAY_MONTH_MAX = [];
 
   function computeDayCounts(){
     var counts = [];
@@ -229,25 +233,51 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
     });
     DAY_COUNTS = counts;
     DAY_GLOBAL_MAX = 0;
+    DAY_MONTH_MAX = [];
     for (var mi = 0; mi < 12; mi++){
-      DAY_GLOBAL_MAX = Math.max(DAY_GLOBAL_MAX, Math.max.apply(null, counts[mi].slice(1, MONTH_DAYS[mi]+1)));
+      DAY_MONTH_MAX[mi] = Math.max.apply(null, counts[mi].slice(1, MONTH_DAYS[mi]+1));
+      DAY_GLOBAL_MAX = Math.max(DAY_GLOBAL_MAX, DAY_MONTH_MAX[mi]);
     }
   }
 
-  function paintHeatmap(){
+  function paintHeatmap(mode){
     MONTHS.forEach(function(m, month){
+      var denom = mode === "unscaled" ? DAY_GLOBAL_MAX : DAY_MONTH_MAX[month];
       Object.keys(m.cells).forEach(function(d){
         var day = Number(d);
         var count = DAY_COUNTS[month][day];
         var cell = m.cells[d];
-        if (count && DAY_GLOBAL_MAX){
-          var heat = Math.max(0.14, count / DAY_GLOBAL_MAX);
+        if (mode !== "hidden" && count && denom){
+          var heat = Math.max(0.14, count / denom);
           cell.style.setProperty("--heat", heat.toFixed(3));
-          cell.title = MONTH_NAMES[month] + " " + day + " (" + letterForDay(day) + ") — " + count + " species";
         } else {
-          cell.title = MONTH_NAMES[month] + " " + day;
+          cell.style.removeProperty("--heat");
         }
+        cell.title = count
+          ? MONTH_NAMES[month] + " " + day + " (" + letterForDay(day) + ") — " + count + " species"
+          : MONTH_NAMES[month] + " " + day;
       });
+    });
+  }
+
+  var HEAT_MODE_KEY = "mammal-ephemeris-heat-mode";
+  function loadHeatMode(){
+    try {
+      var v = localStorage.getItem(HEAT_MODE_KEY);
+      if (v === "hidden" || v === "scaled" || v === "unscaled") return v;
+    } catch (err) {}
+    return "scaled";
+  }
+  function saveHeatMode(mode){
+    try { localStorage.setItem(HEAT_MODE_KEY, mode); } catch (err) {}
+  }
+
+  function setHeatMode(mode){
+    paintHeatmap(mode);
+    saveHeatMode(mode);
+    document.querySelectorAll(".heat-opt").forEach(function(btn){
+      var active = btn.getAttribute("data-mode") === mode;
+      btn.setAttribute("aria-checked", active ? "true" : "false");
     });
   }
 
@@ -294,7 +324,11 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
 
   buildMonthGrid();
   computeDayCounts();
-  paintHeatmap();
+  setHeatMode(loadHeatMode());
+  document.querySelectorAll(".heat-opt").forEach(function(btn){
+    btn.setAttribute("role", "radio");
+    btn.addEventListener("click", function(){ setHeatMode(btn.getAttribute("data-mode")); });
+  });
   drawFixedMarkers();
   buildFixedLegend();
 

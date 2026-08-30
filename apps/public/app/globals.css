@@ -206,6 +206,32 @@ img { max-width: 100%; }
     cursor:pointer;
   }
 
+  .heat-toggle{
+    display:flex;
+    justify-content:center;
+    gap:.3rem;
+    flex-wrap:wrap;
+  }
+  .heat-opt{
+    font-family:"Work Sans",sans-serif;
+    font-size:.72rem;
+    font-weight:500;
+    letter-spacing:.02em;
+    padding:.32rem .65rem;
+    border-radius:3px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .heat-opt:hover{ color:var(--text); border-color:var(--teal); }
+  .heat-opt[aria-checked="true"]{
+    background:var(--teal);
+    border-color:var(--teal);
+    color:var(--surface);
+    font-weight:600;
+  }
+
   .fixed-legend{
     display:flex;
     flex-wrap:wrap;
