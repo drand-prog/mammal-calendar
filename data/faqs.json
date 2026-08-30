@@ -14,5 +14,33 @@
   {
     "q": "What do the bars around the rim mean?",
     "a": "They're a histogram of how many species land on each day. “Scaled by month” normalizes each clade to its own busiest day, so every clade's shape is visible regardless of size. “Unscaled” shows true relative sizes — Rodentia and Chiroptera dwarf everything else. Hover a bar for the exact count, or click it to browse that date."
+  },
+  {
+    "q": "Why are some kinds of mammals celebrated only during certain months?",
+    "a": "Given our fragmentary knowledge of human society, we only know two things for certain: Groundhog Day is on February 2, and Mole Day is on October 23. \n\nIt can't be a coincidence that there are 12 major groups of mammals and 12 months of the human year.\n\nFrom these and other observations, the humans' likely system of mammal celebrations falls into place."
+  },
+  {
+    "q": "Why is January Primate Month?",
+    "a": "Given their well-known self-regard, humans would naturally place their own lineage -- apes, monkeys, lemurs, colugos, and treeshrews -- at the top of the year. We also know that to ring in the new year, humans would pack as many of themselves as possible in a special city known for its mythical giant gorilla."
+  },
+  {
+    "q": "Why is February Rodent Month?",
+    "a": "We know that Groundhog Day is February 2, therefore all other rodents must share this month, from the mighty capybara to the pygmy jerboa."
+  },
+  {
+    "q": "Why is March Lagomorph Month?",
+    "a": "We know that many humans celebrated rabbits and hares during this time of year, for reasons that are lost to time. We also know that they often rang in the month of March with a special holiday called \"Leap Day.\""
+  },
+  {
+    "q": "Why is April Monotreme Month?",
+    "a": "We know that egg-worship was common across many human cultures during this time of year. What better time to celebrate the egg-laying platypus and its various echidna relatives?"
+  },
+  {
+    "q": "Why is May Marsupial Month?",
+    "a": "Motherhood was widely celebrated during May, and what says motherhood more than a helpless joey safely tucked away in the pouch of a kangaroo, koala, or sugar glider?"
+  },
+  {
+    "q": "Why is June Afroinsectiphilia Month?",
+    "a": "June was a time for celebrating difference as something to be proud of, thus we can confidently conclude that this was the time to celebrate tenrecs, elephant shrews, and aardvarks."
   }
 ]
