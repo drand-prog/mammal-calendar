@@ -1,5 +1,9 @@
 [
   {
+    "q": "What is this?",
+    "a": "This calendar is the graduate dissertation of an expert in Homo sapiens culture and society. \n\nHomo sapiens was a species of literate primate on the planet Sol-3.\n\nBecause this species lived so long ago, and so far away, we have to make some educated guesses about their traditions based on the few facts we know for certain.\n\nFortunately, we have strong evidence that humans shared Sol-3 with at least 6,760 other mammals.\n\nAnd we know that they used a calendar of 365 days and 12 months.\n\nIt stands to reason that they would designate specific days to celebrate each of their fellow-mammals."
+  },
+  {
     "q": "Why are some kinds of mammals celebrated only during certain months?",
     "a": "Given our fragmentary knowledge of human society, we only know two things for certain: Groundhog Day is on February 2, and Mole Day is on October 23. \n\nIt can't be a coincidence that there are 12 major groups of mammals and 12 months of the human year.\n\nFrom these and other observations, the humans' likely system of mammal celebrations falls into place."
   },
@@ -50,9 +54,5 @@
   {
     "q": "Why was December Ungulata Month?",
     "a": "Something big was going on with reindeer. We're not sure what, but surely this month celebrated all hoofed mammals, and their close relatives the whales."
-  },
-  {
-    "q": "Where does the species list come from?",
-    "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
   }
 ]
