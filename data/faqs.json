@@ -1,9 +1,5 @@
 [
   {
-    "q": "How is a mammal's date calculated?",
-    "a": "The month comes from its clade — Primates get January, Rodentia gets February, and so on through all twelve. The day is the first letter of the species name (A = the 1st, Z = the 26th). The hour is the first letter of the genus name (A = 0:00 … W = 22:00, X/Y/Z = 24:00), and the minute is the last letter of the species name (A = :01 … Z = :26)."
-  },
-  {
     "q": "Where does the species list come from?",
     "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
   },
@@ -49,7 +45,7 @@
   },
   {
     "q": "Why was August Carnivora Month?",
-    "a": "Two pieces of evidence make this relationship incontrovertible: \n\nFirst, August is linked to Sirius, the Dog Star, and thus the Dog Days of Summer.\n\nSecond, August is the month that a culturally significant film was first released, emphasizing lions and tigers and bears."
+    "a": "Two pieces of evidence make this relationship incontrovertible: \n\nFirst, August is linked to Sirius, the Dog Star, and thus the Dog Days of Summer.\n\nSecond, August is the month that a culturally significant film was first released, emphasizing lions and tigers and bears.\n\nAnd presumably also pangolins. Oh my are they close relatives."
   },
   {
     "q": "Why was September Xenarthra Month?",
