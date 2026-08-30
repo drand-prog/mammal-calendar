@@ -6,6 +6,7 @@ import { commitJsonFile } from "@/lib/github";
 // server-side check agree on limits.
 const FIELDS: Record<string, number> = {
   title: 100,
+  searchLabel: 100,
   searchPlaceholder: 100,
   faqHeading: 100,
   browsePrompt: 200,

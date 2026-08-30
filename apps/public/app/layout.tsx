@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: loadTitle(),
   description:
     "Search any mammal by common or scientific name to find the day, hour, and minute the wheel assigns it — month by clade, date and time by the letters of its own name.",
+  // Points at the /api/favicon route rather than the app/icon.tsx metadata-
+  // image convention -- see that route's comment for why.
+  icons: { icon: "/api/favicon" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

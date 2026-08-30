@@ -1,8 +1,20 @@
 import type { Metadata } from "next";
+import fs from "node:fs";
+import path from "node:path";
 import "./globals.css";
 
+function loadTitle(): string {
+  const filePath = path.join(process.cwd(), "..", "..", "data", "content.json");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  const content = JSON.parse(raw) as { title?: string };
+  return content.title || "The Calendar of Mammals";
+}
+
+// Matches the public site's tab title exactly (same data/content.json
+// field the public app's layout.tsx reads), so the two are never out of
+// sync with each other.
 export const metadata: Metadata = {
-  title: "Mammal Ephemeris — Admin",
+  title: loadTitle(),
   description: "Edit the Mammal Ephemeris site text and FAQs.",
   robots: { index: false, follow: false },
 };

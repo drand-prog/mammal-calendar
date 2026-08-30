@@ -1,5 +1,6 @@
 {
   "title": "The Calendar of Mammals",
+  "searchLabel": "Search the specimen index",
   "searchPlaceholder": "Common or scientific name… try “narwhal”",
   "faqHeading": "Frequently Asked Questions",
   "browsePrompt": "Pick a month and day above, or click a month's timeline, to see who's celebrating."

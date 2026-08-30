@@ -8,6 +8,7 @@ import { initMammalCalendarApp } from "@/lib/appScript";
 
 export type SiteContent = {
   title: string;
+  searchLabel: string;
   searchPlaceholder: string;
   faqHeading: string;
   browsePrompt: string;
@@ -27,6 +28,7 @@ function escapeHtml(s: string): string {
 // gated field rather than public user input.
 function renderBody(content: SiteContent): string {
   return BODY_HTML.replace(/__TITLE__/g, escapeHtml(content.title))
+    .replace(/__SEARCH_LABEL__/g, escapeHtml(content.searchLabel))
     .replace(/__SEARCH_PLACEHOLDER__/g, escapeHtml(content.searchPlaceholder))
     .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading))
     .replace(/__BROWSE_PROMPT__/g, escapeHtml(content.browsePrompt));

@@ -1,6 +1,8 @@
 // Auto-ported from the original single-file artifact script.
 // Vanilla imperative DOM code, run once after BODY_HTML mounts.
 // eslint-disable
+import { MONTH_EMOJI } from "./monthEmoji";
+
 export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT) {
 "use strict";
 
@@ -24,24 +26,12 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   ];
   var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-  // One emoji badge per month card, upper-right corner. April and June are
-  // fixed (egg for the only egg-laying mammals; rainbow for Afroinsectiphilia,
-  // which has no animal emoji of its own). Everywhere else with more than one
-  // plausible option, one is picked at random each time the page loads.
-  var MONTH_EMOJI = [
-    ["🐵","🐒","🦍","🦧"],                                            // January -- Primates
-    ["🐭","🐁","🐀","🐹","🐿️","🦫"],                                  // February -- Rodentia
-    ["🐰","🐇"],                                                      // March -- Lagomorpha
-    ["🥚"],                                                           // April -- Monotremata
-    ["🦘","🐨"],                                                      // May -- Marsupialia
-    ["🌈"],                                                           // June -- Afroinsectiphilia
-    ["🐘","🦣"],                                                      // July -- Paenungulata
-    ["🐺","🦊","🦁","🐯","🐻","🐼","🦭","🦡"],                          // August -- Carnivora
-    ["🦥"],                                                           // September -- Xenarthra
-    ["🦔"],                                                           // October -- Eulipotyphla
-    ["🦇"],                                                           // November -- Chiroptera
-    ["🦓","🦌","🦬","🐄","🐖","🐐","🐫","🦙","🦒","🦏","🦛","🐋","🐬"]   // December -- Ungulata
-  ];
+  // One emoji badge per month card, upper-right corner (MONTH_EMOJI is
+  // shared with icon.tsx, which draws the rotating favicon from the same
+  // pool). April and June are fixed (egg for the only egg-laying mammals;
+  // rainbow for Afroinsectiphilia, which has no animal emoji of its own).
+  // Everywhere else with more than one plausible option, one is picked at
+  // random each time the page loads.
   function pickEmoji(month){
     var options = MONTH_EMOJI[month];
     return options[Math.floor(Math.random() * options.length)];
@@ -525,6 +515,29 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   document.addEventListener("click", function(e){
     if (!e.target.closest(".search-card")) resultsBox.innerHTML = "";
   });
+
+  // Two more "Try:" chips, randomly picked fresh on each page load and
+  // appended after the curated set.
+  (function addRandomChips(){
+    var chipsBox = document.querySelector(".chips");
+    if (!chipsBox) return;
+    var picks = [];
+    var tries = 0;
+    while (picks.length < 2 && tries < 50){
+      tries++;
+      var candidate = DATA[Math.floor(Math.random() * DATA.length)];
+      var alreadyPicked = picks.some(function(p){ return p[0] === candidate[0]; });
+      if (!alreadyPicked) picks.push(candidate);
+    }
+    picks.forEach(function(entry){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.setAttribute("data-pick", entry[0]);
+      chip.textContent = entry[0];
+      chipsBox.appendChild(chip);
+    });
+  })();
 
   document.querySelectorAll(".chip").forEach(function(chip){
     chip.addEventListener("click", function(){

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 export type ContentFields = {
   title: string;
+  searchLabel: string;
   searchPlaceholder: string;
   faqHeading: string;
   browsePrompt: string;
@@ -18,6 +19,7 @@ const CONTENT_FIELDS: {
   multiline?: boolean;
 }[] = [
   { key: "title", label: "Title", max: 100 },
+  { key: "searchLabel", label: "Search box label", max: 100 },
   { key: "searchPlaceholder", label: "Search box placeholder", max: 100 },
   { key: "faqHeading", label: "FAQ section heading", max: 100 },
   { key: "browsePrompt", label: "Browse-by-date prompt, shown before a month and day are picked", max: 200, multiline: true },
