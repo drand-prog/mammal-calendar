@@ -471,6 +471,45 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     if (i>=0 && i<rows.length){ rows[i].classList.add("hi"); rows[i].scrollIntoView({block:"nearest"}); }
   }
 
+  // ---------- Specimen photo (fetched live from Wikipedia on selection) ----------
+  // photoRequestSeq guards against a slow, now-superseded fetch overwriting
+  // a photo for whatever species the user has since selected.
+  var photoRequestSeq = 0;
+
+  function loadSpecimenPhoto(r){
+    var reqId = ++photoRequestSeq;
+    var container = document.getElementById("specimenPhoto");
+    var img = document.getElementById("specimenPhotoImg");
+    var credit = document.getElementById("photoCredit");
+
+    container.className = "specimen-photo loading";
+    img.removeAttribute("src");
+    img.alt = "";
+    credit.setAttribute("tabindex", "-1"); // not reachable by keyboard until a photo is actually loaded
+
+    var title = (r.genus + "_" + r.species);
+    fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(data){
+        if (reqId !== photoRequestSeq) return; // a newer selection moved on already
+        var src = data && data.thumbnail && data.thumbnail.source;
+        if (!src){
+          container.className = "specimen-photo";
+          return;
+        }
+        credit.href = (data.content_urls && data.content_urls.desktop && data.content_urls.desktop.page) ||
+          ("https://en.wikipedia.org/wiki/" + encodeURIComponent(title));
+        credit.removeAttribute("tabindex");
+        img.alt = "Photo of " + r.common + " (" + r.genus + " " + r.species + ")";
+        img.src = src;
+        container.className = "specimen-photo loaded";
+      })
+      .catch(function(){
+        if (reqId !== photoRequestSeq) return;
+        container.className = "specimen-photo";
+      });
+  }
+
   function selectEntry(entry){
     var r = compute(entry);
     input.value = entry[0];
@@ -478,65 +517,18 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
 
     specimen.classList.add("show");
 
-    document.getElementById("outCommon").textContent = r.common;
+    var ov = r.override;
+    var greeting = "Happy " + ((ov && ov.holiday) ? ov.holiday : (r.common + " Day")) + "!";
+    document.getElementById("outGreeting").textContent = greeting;
     document.getElementById("outSci").textContent = r.genus + " " + r.species;
-    document.getElementById("outCladePill").textContent = MONTH_NAMES[r.month] + " · " + r.clade.formal;
 
     document.getElementById("outDate").textContent = MONTH_NAMES[r.month] + " " + r.day;
     document.getElementById("outTime").textContent = pad2(r.hour) + ":" + pad2(r.minute);
 
-    var ov = r.override;
-    var note = document.getElementById("overrideNote");
-    if (ov && ov.note){
-      document.getElementById("overrideText").innerHTML = ov.note;
-      note.classList.add("show");
-    } else {
-      note.classList.remove("show");
-    }
-
-    var species = r.species, genus = r.genus;
-    var bd = document.getElementById("breakdown");
-    bd.innerHTML = "";
-    var fixedFor = ov && ov.holiday ? ("Fixed for " + ov.holiday) : null;
-
-    var dayDetail;
-    if (ov && ov.day != null){
-      dayDetail = fixedFor;
-    } else {
-      var firstL = species[0].toUpperCase();
-      var secondL = species.length > 1 ? species[1].toUpperCase() : "";
-      dayDetail = (firstL === "A" && secondL >= "A" && secondL <= "E")
-        ? ("First two letters of “" + species + "” are " + firstL + secondL)
-        : ("First letter of “" + species + "” is " + firstL);
-    }
-
-    var rows = [
-      ["Month", (ov && ov.month != null) ? fixedFor : ("Clade " + r.clade.formal + " governs"), MONTH_NAMES[r.month]],
-      ["Day", dayDetail, "the " + ordinal(r.day)],
-      ["Hour", (ov && ov.hour != null) ? fixedFor : ("First letter of “" + genus + "” is " + genus[0].toUpperCase()), pad2(r.hour) + ":00"],
-      ["Minute", (ov && ov.minute != null) ? fixedFor : ("Last letter of “" + species + "” is " + species[species.length-1].toUpperCase()), ":" + pad2(r.minute)]
-    ];
-    rows.forEach(function(row){
-      var div = document.createElement("div");
-      div.className = "b-row";
-      div.innerHTML = '<span class="b-label"></span><span class="b-detail"></span><span class="b-result"></span>';
-      div.querySelector(".b-label").textContent = row[0];
-      div.querySelector(".b-detail").textContent = row[1];
-      div.querySelector(".b-result").textContent = row[2];
-      bd.appendChild(div);
-    });
-
-    var fact = document.getElementById("outFact");
-    var base = "<b>" + r.clade.formal + "</b> claims " + MONTH_NAMES[r.month] + ", so every species in the order shares this month &mdash; only the day and time are its own.";
-    fact.innerHTML = r.fact ? (base + " " + r.fact) : base;
+    loadSpecimenPhoto(r);
 
     pointNeedle(r.month, r.day);
     document.getElementById("wheelCaption").innerHTML = "<b>"+r.common+"</b> falls on " + MONTH_NAMES[r.month] + " " + r.day + " at " + pad2(r.hour) + ":" + pad2(r.minute) + ".";
-  }
-
-  function ordinal(n){
-    var s = ["th","st","nd","rd"], v = n % 100;
-    return n + (s[(v-20)%10] || s[v] || s[0]);
   }
 
   input.addEventListener("input", function(){
