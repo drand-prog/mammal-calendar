@@ -685,4 +685,24 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     });
   }
   renderFaqs();
+
+  // ---------- Auto-select today's closest mammal ----------
+  // On load, show whichever species lands on today's real month/day and
+  // has the hour:minute closest to right now -- using the visitor's own
+  // local clock. If nobody lands on today at all, the specimen card just
+  // stays hidden until the visitor picks one themselves.
+  (function autoSelectForNow(){
+    var now = new Date();
+    var todays = DATE_INDEX[now.getMonth()][now.getDate()];
+    if (!todays || !todays.length) return;
+
+    var nowMinutes = now.getHours()*60 + now.getMinutes();
+    var best = null, bestDiff = Infinity;
+    todays.forEach(function(entry){
+      var r = compute(entry);
+      var diff = Math.abs((r.hour*60 + r.minute) - nowMinutes);
+      if (diff < bestDiff){ bestDiff = diff; best = entry; }
+    });
+    if (best) selectEntry(best);
+  })();
 }
