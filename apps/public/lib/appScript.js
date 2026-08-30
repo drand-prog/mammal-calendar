@@ -116,44 +116,29 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
     };
   }
 
-  // ---------- Month grid geometry ----------
-  // Each month is a horizontal timeline in its own small SVG (viewBox units,
-  // stretched to the card's actual width via preserveAspectRatio="none") --
-  // plain Cartesian x/y, no polar math needed now that the wheel is a grid.
-  var TL_W = 300, TL_H = 100;
-  var TL_BASELINE = 66;             // day-tick / bar baseline, in viewBox units
-  var TL_TICK_MINOR = 6, TL_TICK_MAJOR = 11; // how far ticks drop below the baseline
-  var TL_STAR_Y = 8;                 // fixed-holiday star height above the baseline
-  var TL_MARKER_Y = TL_BASELINE + 16; // selected-day marker pin, hanging below the ticks --
-                                       // a separate region from the bars above, so it never
-                                       // fights a tall bar for the same visual space
-  var TL_SCALED_MAX = 26;            // a "scaled" bar's max reach above the baseline
-  var TL_UNSCALED_MAX = 52;          // "unscaled" mode's tallest bar reaches this far
-
-  function tlX(day, monthDays){ return ((day - 0.5) / monthDays) * TL_W; }
-
-  var NS = "http://www.w3.org/2000/svg";
-  function el(tag, attrs){
-    var n = document.createElementNS(NS, tag);
-    for (var k in attrs) n.setAttribute(k, attrs[k]);
-    return n;
-  }
+  // ---------- Month grid: a real calendar page of day boxes ----------
+  var WEEKDAY_LABELS = ["S","M","T","W","T","F","S"];
+  // Weekday (Sunday=0) that the 1st of each 2026 month falls on, so each
+  // month's boxes line up exactly the way a 2026 wall calendar would.
+  var START_WEEKDAY_2026 = [4,0,0,3,5,1,3,6,2,4,0,2];
 
   var monthGrid = document.getElementById("monthGrid");
-  var MONTHS = []; // MONTHS[month] = { card, timeline, histGroup, marker }
+  var MONTHS = []; // MONTHS[month] = { card, dayGrid, cells: {day: cellEl} }
 
   function buildMonthGrid(){
     CLADES.forEach(function(clade, i){
       var monthDays = MONTH_DAYS[clade.month];
+      var startWeekday = START_WEEKDAY_2026[clade.month];
+      var month = clade.month;
 
       var card = document.createElement("div");
       card.className = "month-card " + (i % 2 === 0 ? "stripe-a" : "stripe-b");
-      card.setAttribute("data-month", clade.month);
+      card.setAttribute("data-month", month);
 
       var emojiEl = document.createElement("span");
       emojiEl.className = "month-card-emoji";
       emojiEl.setAttribute("aria-hidden", "true");
-      emojiEl.textContent = pickEmoji(clade.month);
+      emojiEl.textContent = pickEmoji(month);
       card.appendChild(emojiEl);
 
       var head = document.createElement("div");
@@ -163,7 +148,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       labels.className = "month-card-labels";
       var nameEl = document.createElement("span");
       nameEl.className = "month-card-name";
-      nameEl.textContent = MONTH_NAMES[clade.month];
+      nameEl.textContent = MONTH_NAMES[month];
       var cladeEl = document.createElement("span");
       cladeEl.className = "month-card-clade";
       cladeEl.textContent = clade.name;
@@ -172,75 +157,67 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       head.appendChild(labels);
       card.appendChild(head);
 
-      var timeline = el("svg", {
-        class:"month-timeline", viewBox:"0 0 " + TL_W + " " + TL_H,
-        preserveAspectRatio:"none", "data-month": clade.month,
-        role:"img", "aria-label": MONTH_NAMES[clade.month] + " day-by-day timeline, click a day to browse it"
+      var dayGrid = document.createElement("div");
+      dayGrid.className = "day-grid";
+      dayGrid.setAttribute("role", "img");
+      dayGrid.setAttribute("aria-label", MONTH_NAMES[month] + ", " + monthDays + " days, shaded by species count -- click a day to browse it");
+
+      WEEKDAY_LABELS.forEach(function(w){
+        var label = document.createElement("span");
+        label.className = "weekday-label";
+        label.textContent = w;
+        label.setAttribute("aria-hidden", "true");
+        dayGrid.appendChild(label);
       });
 
-      timeline.appendChild(el("line", {x1:0, y1:TL_BASELINE, x2:TL_W, y2:TL_BASELINE, class:"tl-baseline"}));
-
-      // one tick per achievable day this month (29-31; see MONTH_DAYS)
-      for (var d = 0; d < monthDays; d++){
-        var x = (d / monthDays) * TL_W;
-        var isMajor = (d % 5 === 0);
-        timeline.appendChild(el("line", {
-          x1:x.toFixed(2), y1:TL_BASELINE,
-          x2:x.toFixed(2), y2:(TL_BASELINE + (isMajor ? TL_TICK_MAJOR : TL_TICK_MINOR)).toFixed(2),
-          class:"tick" + (isMajor ? " major" : "")
-        }));
+      for (var b = 0; b < startWeekday; b++){
+        var blank = document.createElement("span");
+        blank.className = "day-cell blank";
+        blank.setAttribute("aria-hidden", "true");
+        dayGrid.appendChild(blank);
       }
 
-      var histGroupEl = el("g", {class:"tl-hist-group"});
-      timeline.appendChild(histGroupEl);
+      var cells = {};
+      for (var day = 1; day <= monthDays; day++){
+        (function(day){
+          var cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "day-cell";
+          cell.setAttribute("data-month", month);
+          cell.setAttribute("data-day", day);
+          var num = document.createElement("span");
+          num.className = "day-num";
+          num.textContent = String(day);
+          cell.appendChild(num);
+          cell.addEventListener("click", function(){ renderBrowse(month, day); });
+          dayGrid.appendChild(cell);
+          cells[day] = cell;
+        })(day);
+      }
 
-      // selected-day marker (hidden until a mammal is chosen)
-      var marker = el("g", {class:"day-marker"});
-      marker.appendChild(el("line", {x1:0, y1:TL_MARKER_Y, x2:0, y2:TL_BASELINE, class:"day-marker-line"}));
-      marker.appendChild(el("circle", {cx:0, cy:TL_MARKER_Y, r:5, class:"day-marker-dot"}));
-      timeline.appendChild(marker);
-
-      // Click anywhere on this month's timeline to browse that exact date.
-      timeline.addEventListener("click", function(evt){
-        var t = evt.currentTarget;
-        var month = Number(t.getAttribute("data-month"));
-        var pt = t.createSVGPoint();
-        pt.x = evt.clientX; pt.y = evt.clientY;
-        var ctm = t.getScreenCTM();
-        if (!ctm) return;
-        var loc = pt.matrixTransform(ctm.inverse());
-        var mDays = MONTH_DAYS[month];
-        var day = Math.min(mDays, Math.max(1, Math.ceil((loc.x / TL_W) * mDays)));
-        renderBrowse(month, day);
-      });
-
-      card.appendChild(timeline);
+      card.appendChild(dayGrid);
       monthGrid.appendChild(card);
 
-      MONTHS[clade.month] = {card:card, timeline:timeline, histGroup:histGroupEl, marker:marker};
+      MONTHS[month] = {card:card, dayGrid:dayGrid, cells:cells};
     });
   }
 
   function pointMarker(month, day){
-    var x = tlX(day, MONTH_DAYS[month]);
     MONTHS.forEach(function(m, mi){
       var isTarget = mi === month;
       m.card.classList.toggle("active", isTarget);
-      m.marker.classList.toggle("live", isTarget);
-      if (isTarget) m.marker.setAttribute("transform", "translate(" + x.toFixed(2) + ",0)");
+      Object.keys(m.cells).forEach(function(d){
+        m.cells[d].classList.toggle("selected", isTarget && Number(d) === day);
+      });
     });
   }
 
-  // ---------- Species-count histogram, one strip per month timeline ----------
-  // Three display modes:
-  //  - "hidden":   no histogram at all
-  //  - "scaled":   bar height relative to that MONTH's own busiest day
-  //                (every clade's shape is visible, regardless of size)
-  //  - "unscaled": bar height relative to the single busiest day anywhere
-  //                (true relative sizes — smaller clades read as near-flat)
-  var HIST_COUNTS = null, HIST_GLOBAL_MAX = 0;
+  // ---------- Species-count heat map ----------
+  // Every day box is shaded relative to the single busiest day anywhere on
+  // the calendar, so the shading reflects true relative density.
+  var DAY_COUNTS = null, DAY_GLOBAL_MAX = 0;
 
-  function computeHistCounts(){
+  function computeDayCounts(){
     var counts = [];
     for (var m = 0; m < 12; m++){
       counts[m] = [];
@@ -250,59 +227,27 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       var r = compute(entry);
       counts[r.month][r.day]++;
     });
-    HIST_COUNTS = counts;
-    HIST_GLOBAL_MAX = 0;
+    DAY_COUNTS = counts;
+    DAY_GLOBAL_MAX = 0;
     for (var mi = 0; mi < 12; mi++){
-      HIST_GLOBAL_MAX = Math.max(HIST_GLOBAL_MAX, Math.max.apply(null, counts[mi].slice(1, MONTH_DAYS[mi]+1)));
+      DAY_GLOBAL_MAX = Math.max(DAY_GLOBAL_MAX, Math.max.apply(null, counts[mi].slice(1, MONTH_DAYS[mi]+1)));
     }
   }
 
-  function renderHistogram(mode){
+  function paintHeatmap(){
     MONTHS.forEach(function(m, month){
-      m.histGroup.innerHTML = "";
-      if (mode === "hidden") return;
-
-      var monthDays = MONTH_DAYS[month];
-      var barWidth = (TL_W / monthDays) * 0.55;
-      var monthMax = Math.max.apply(null, HIST_COUNTS[month].slice(1, monthDays+1));
-      var denom = mode === "unscaled" ? HIST_GLOBAL_MAX : monthMax;
-      var maxReach = mode === "unscaled" ? TL_UNSCALED_MAX : TL_SCALED_MAX;
-
-      for (var day = 1; day <= monthDays; day++){
-        var count = HIST_COUNTS[month][day];
-        if (!count || !denom) continue;
-        var len = (count/denom) * maxReach;
-        var x = tlX(day, monthDays);
-        var bar = el("line",{
-          x1:x.toFixed(2), y1:TL_BASELINE, x2:x.toFixed(2), y2:(TL_BASELINE-len).toFixed(2),
-          class:"tl-hist-bar", "stroke-width":barWidth.toFixed(2)
-        });
-        var t = document.createElementNS(NS,"title");
-        t.textContent = MONTH_NAMES[month] + " " + day + " (" + letterForDay(day) + ") — " + count + " species";
-        bar.appendChild(t);
-        m.histGroup.appendChild(bar);
-      }
-    });
-  }
-
-  var HIST_MODE_KEY = "mammal-ephemeris-hist-mode";
-  function loadHistMode(){
-    try {
-      var v = localStorage.getItem(HIST_MODE_KEY);
-      if (v === "hidden" || v === "scaled" || v === "unscaled") return v;
-    } catch (err) {}
-    return "scaled";
-  }
-  function saveHistMode(mode){
-    try { localStorage.setItem(HIST_MODE_KEY, mode); } catch (err) {}
-  }
-
-  function setHistMode(mode){
-    renderHistogram(mode);
-    saveHistMode(mode);
-    document.querySelectorAll(".hist-opt").forEach(function(btn){
-      var active = btn.getAttribute("data-mode") === mode;
-      btn.setAttribute("aria-checked", active ? "true" : "false");
+      Object.keys(m.cells).forEach(function(d){
+        var day = Number(d);
+        var count = DAY_COUNTS[month][day];
+        var cell = m.cells[d];
+        if (count && DAY_GLOBAL_MAX){
+          var heat = Math.max(0.14, count / DAY_GLOBAL_MAX);
+          cell.style.setProperty("--heat", heat.toFixed(3));
+          cell.title = MONTH_NAMES[month] + " " + day + " (" + letterForDay(day) + ") — " + count + " species";
+        } else {
+          cell.title = MONTH_NAMES[month] + " " + day;
+        }
+      });
     });
   }
 
@@ -314,17 +259,18 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   function drawFixedMarkers(){
     fixedEntries().forEach(function(entry){
       var r = compute(entry);
-      var x = tlX(r.day, MONTH_DAYS[r.month]);
-
-      // Sits above the timeline's own tick mark for that day, not down
-      // among the histogram bars.
-      var g = el("g",{transform:"translate("+x.toFixed(2)+","+TL_STAR_Y+")",style:"cursor:pointer;"});
-      g.appendChild(el("path",{d:starPath(),fill:"var(--clay)",stroke:"var(--surface)","stroke-width":1}));
-      var titleEl = document.createElementNS(NS,"title");
-      titleEl.textContent = entry[5].holiday + " — " + MONTH_NAMES[r.month] + " " + r.day + " (" + r.common + ")";
-      g.appendChild(titleEl);
-      g.addEventListener("click", function(){ selectEntry(entry); });
-      MONTHS[r.month].timeline.appendChild(g);
+      var cell = MONTHS[r.month].cells[r.day];
+      if (!cell) return;
+      var star = document.createElement("span");
+      star.className = "day-star";
+      star.setAttribute("aria-hidden", "true");
+      star.textContent = "★";
+      star.title = entry[5].holiday + " — " + MONTH_NAMES[r.month] + " " + r.day + " (" + r.common + ")";
+      star.addEventListener("click", function(evt){
+        evt.stopPropagation();
+        selectEntry(entry);
+      });
+      cell.appendChild(star);
     });
   }
 
@@ -347,12 +293,8 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   }
 
   buildMonthGrid();
-  computeHistCounts();
-  setHistMode(loadHistMode());
-  document.querySelectorAll(".hist-opt").forEach(function(btn){
-    btn.setAttribute("role", "radio");
-    btn.addEventListener("click", function(){ setHistMode(btn.getAttribute("data-mode")); });
-  });
+  computeDayCounts();
+  paintHeatmap();
   drawFixedMarkers();
   buildFixedLegend();
 

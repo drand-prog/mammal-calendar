@@ -56,7 +56,7 @@ apps/admin/                    the admin tool — no wheel/species code at all
   lib/github.ts                  commits a data/*.json file via the GitHub REST API
 ```
 
-The wheel/search/browse/histogram logic in `apps/public/lib/appScript.js` is
+The calendar-grid/search/browse/heatmap logic in `apps/public/lib/appScript.js` is
 intentionally close to a straight port of the code's original form as a
 single-file Claude Artifact — it was already built and tested there, so
 later migrations changed where data comes from and how admin auth works,
