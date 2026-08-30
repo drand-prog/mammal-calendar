@@ -607,19 +607,6 @@ img { max-width: 100%; }
   .admin-remove:hover{ text-decoration:underline; }
   .admin-save-row{ margin-top:.8rem; }
 
-  .credit{
-    margin-top:2.5rem;
-    padding-top:1.25rem;
-    border-top:1px solid var(--border);
-    text-align:center;
-    font-size:.76rem;
-    line-height:1.6;
-    color:var(--text-muted);
-    max-width:62ch;
-    margin-left:auto;
-    margin-right:auto;
-  }
-
   @media (prefers-reduced-motion: reduce){
     .needle, .needle-dot{ transition:none; }
   }
