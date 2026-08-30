@@ -104,8 +104,12 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   }
 
   // ---------- Wheel geometry ----------
+  // Radii are scaled up from the original design (which left ~10% of the
+  // viewBox as unused margin) so the wheel and histogram fill more of
+  // their card, while still leaving a small buffer past R_HIST_MAX so an
+  // unscaled bar's stroke doesn't touch the edge.
   var CX = 450, CY = 450;
-  var R_OUTER = 264, R_TICK_OUT = 250, R_TICK_IN = 232, R_LABEL = 205, R_CLADE = 178, R_INNER = 108, R_HUB = 78;
+  var R_OUTER = 288, R_TICK_OUT = 272, R_TICK_IN = 253, R_LABEL = 223, R_CLADE = 194, R_INNER = 118, R_HUB = 85;
   var R_HIST_BASE = R_OUTER + 6;
   var HIST_BAR_UNIT = 34;       // a "scaled" bar's max reach
   var HIST_UNSCALED_MULT = 4;   // unscaled mode's tallest bar reaches 4x that
@@ -344,13 +348,12 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     fixedEntries().forEach(function(entry){
       var r = compute(entry);
       var ov = entry[5];
-      var timeStr = (ov.hour != null || ov.minute != null) ? (", " + pad2(r.hour) + ":" + pad2(r.minute)) : "";
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "fixed-item";
       btn.innerHTML = '<svg width="10" height="10" viewBox="-7 -7 14 14"><path d="'+starPath()+'" fill="currentColor"/></svg><b></b><span></span>';
       btn.querySelector("b").textContent = ov.holiday;
-      btn.querySelector("span").textContent = " — " + MONTH_NAMES[r.month] + " " + r.day + timeStr;
+      btn.querySelector("span").textContent = " — " + MONTH_NAMES[r.month] + " " + r.day;
       btn.title = r.common + " (" + r.genus + " " + r.species + ")";
       btn.addEventListener("click", function(){ selectEntry(entry); });
       container.appendChild(btn);
@@ -528,7 +531,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     loadSpecimenPhoto(r);
 
     pointNeedle(r.month, r.day);
-    document.getElementById("wheelCaption").innerHTML = "<b>"+r.common+"</b> falls on " + MONTH_NAMES[r.month] + " " + r.day + " at " + pad2(r.hour) + ":" + pad2(r.minute) + ".";
   }
 
   input.addEventListener("input", function(){
