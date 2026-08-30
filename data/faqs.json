@@ -1,13 +1,5 @@
 [
   {
-    "q": "Where does the species list come from?",
-    "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
-  },
-  {
-    "q": "What do the bars around the rim mean?",
-    "a": "They're a histogram of how many species land on each day. “Scaled by month” normalizes each clade to its own busiest day, so every clade's shape is visible regardless of size. “Unscaled” shows true relative sizes — Rodentia and Chiroptera dwarf everything else. Hover a bar for the exact count, or click it to browse that date."
-  },
-  {
     "q": "Why are some kinds of mammals celebrated only during certain months?",
     "a": "Given our fragmentary knowledge of human society, we only know two things for certain: Groundhog Day is on February 2, and Mole Day is on October 23. \n\nIt can't be a coincidence that there are 12 major groups of mammals and 12 months of the human year.\n\nFrom these and other observations, the humans' likely system of mammal celebrations falls into place."
   },
@@ -58,5 +50,13 @@
   {
     "q": "Why was December Ungulata Month?",
     "a": "Something big was going on with reindeer. We're not sure what, but surely this month celebrated all hoofed mammals, and their close relatives the whales."
+  },
+  {
+    "q": "Where does the species list come from?",
+    "a": "Every entry is pulled from the Mammal Diversity Database (American Society of Mammalogists, v2.4) — the taxonomic standard used by mammalogists. It covers every currently-recognized extant species, plus two extinct species (the Thylacine and Steller's Sea Cow) kept on as a memorial."
+  },
+  {
+    "q": "What do the bars around the rim mean?",
+    "a": "They're a histogram of how many species land on each day. “Scaled by month” normalizes each clade to its own busiest day, so every clade's shape is visible regardless of size. “Unscaled” shows true relative sizes — Rodentia and Chiroptera dwarf everything else. Hover a bar for the exact count, or click it to browse that date."
   }
 ]
