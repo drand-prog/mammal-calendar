@@ -1,7 +1,7 @@
 // Auto-ported from the original single-file artifact script.
 // Vanilla imperative DOM code, run once after BODY_HTML mounts.
 // eslint-disable
-export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
+export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT) {
 "use strict";
 
   "use strict";
@@ -604,7 +604,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   }
 
   function browsePromptState(){
-    browseSummary.textContent = "Pick a month and day above, or click a month's timeline, to see who's celebrating.";
+    browseSummary.textContent = BROWSE_PROMPT;
     browseResultsBox.innerHTML = "";
   }
 

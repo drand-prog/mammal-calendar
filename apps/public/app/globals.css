@@ -84,14 +84,6 @@ img { max-width: 100%; }
     align-items:center;
     gap:.5rem;
   }
-  .eyebrow{
-    font-family:"Work Sans", sans-serif;
-    font-size:.72rem;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    color:var(--teal);
-    font-weight:600;
-  }
   h1{
     font-family:"Barlow Condensed", "Arial Narrow", sans-serif;
     font-weight:800;
@@ -467,7 +459,6 @@ img { max-width: 100%; }
     padding-top:2rem;
     border-top:1px solid var(--border);
   }
-  .faq-section .eyebrow, .admin-section .eyebrow{ display:block; text-align:left; }
   .faq-heading{
     font-family:"Barlow Condensed", sans-serif;
     text-transform:uppercase;

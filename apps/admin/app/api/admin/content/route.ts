@@ -7,8 +7,8 @@ import { commitJsonFile } from "@/lib/github";
 const FIELDS: Record<string, number> = {
   title: 100,
   searchPlaceholder: 100,
-  faqEyebrow: 80,
   faqHeading: 100,
+  browsePrompt: 200,
 };
 
 function validateContent(input: unknown): { ok: true; content: Record<string, string> } | { ok: false; error: string } {

@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 export type ContentFields = {
   title: string;
   searchPlaceholder: string;
-  faqEyebrow: string;
   faqHeading: string;
+  browsePrompt: string;
 };
 
 export type Faq = { q: string; a: string };
@@ -19,8 +19,8 @@ const CONTENT_FIELDS: {
 }[] = [
   { key: "title", label: "Title", max: 100 },
   { key: "searchPlaceholder", label: "Search box placeholder", max: 100 },
-  { key: "faqEyebrow", label: "FAQ section eyebrow", max: 80 },
   { key: "faqHeading", label: "FAQ section heading", max: 100 },
+  { key: "browsePrompt", label: "Browse-by-date prompt, shown before a month and day are picked", max: 200, multiline: true },
 ];
 
 type Session = "checking" | "out" | "in";

@@ -9,8 +9,8 @@ import { initMammalCalendarApp } from "@/lib/appScript";
 export type SiteContent = {
   title: string;
   searchPlaceholder: string;
-  faqEyebrow: string;
   faqHeading: string;
+  browsePrompt: string;
 };
 
 function escapeHtml(s: string): string {
@@ -28,8 +28,8 @@ function escapeHtml(s: string): string {
 function renderBody(content: SiteContent): string {
   return BODY_HTML.replace(/__TITLE__/g, escapeHtml(content.title))
     .replace(/__SEARCH_PLACEHOLDER__/g, escapeHtml(content.searchPlaceholder))
-    .replace(/__FAQ_EYEBROW__/g, escapeHtml(content.faqEyebrow))
-    .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading));
+    .replace(/__FAQ_HEADING__/g, escapeHtml(content.faqHeading))
+    .replace(/__BROWSE_PROMPT__/g, escapeHtml(content.browsePrompt));
 }
 
 export default function MammalCalendarApp({ content }: { content: SiteContent }) {
@@ -38,7 +38,7 @@ export default function MammalCalendarApp({ content }: { content: SiteContent })
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    initMammalCalendarApp(speciesData, initialFaqs);
+    initMammalCalendarApp(speciesData, initialFaqs, content.browsePrompt);
   }, []);
 
   // The markup below is the same static structure the original artifact
