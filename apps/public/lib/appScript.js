@@ -103,44 +103,22 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     };
   }
 
-  // ---------- Wheel geometry ----------
-  // Radii are scaled up from the original design (which left ~10% of the
-  // viewBox as unused margin) so the wheel and histogram fill more of
-  // their card, while still leaving a small buffer past R_HIST_MAX so an
-  // unscaled bar's stroke doesn't touch the edge. The hub has no label
-  // in it any more, so it's shrunk down to a small center mark, handing
-  // its radius back to the wedges.
-  var CX = 450, CY = 450;
-  var R_OUTER = 300, R_TICK_OUT = 278, R_TICK_IN = 251, R_LABEL = 210, R_CLADE = 169, R_INNER = 64, R_HUB = 46;
-  var R_HIST_BASE = R_OUTER + 6;
-  var HIST_BAR_UNIT = 34;       // a "scaled" bar's max reach
-  var HIST_UNSCALED_MULT = 4;   // unscaled mode's tallest bar reaches 4x that
-  var R_HIST_MAX = R_HIST_BASE + HIST_BAR_UNIT * HIST_UNSCALED_MULT; // canvas reserves room for the taller of the two modes
-  var NEEDLE_LEN = R_TICK_IN - 4;
+  // ---------- Month grid geometry ----------
+  // Each month is a horizontal timeline in its own small SVG (viewBox units,
+  // stretched to the card's actual width via preserveAspectRatio="none") --
+  // plain Cartesian x/y, no polar math needed now that the wheel is a grid.
+  var TL_W = 300, TL_H = 100;
+  var TL_BASELINE = 66;             // day-tick / bar baseline, in viewBox units
+  var TL_TICK_MINOR = 6, TL_TICK_MAJOR = 11; // how far ticks drop below the baseline
+  var TL_STAR_Y = 8;                 // fixed-holiday star height above the baseline
+  var TL_MARKER_Y = TL_BASELINE + 16; // selected-day marker pin, hanging below the ticks --
+                                       // a separate region from the bars above, so it never
+                                       // fights a tall bar for the same visual space
+  var TL_SCALED_MAX = 26;            // a "scaled" bar's max reach above the baseline
+  var TL_UNSCALED_MAX = 52;          // "unscaled" mode's tallest bar reaches this far
 
-  function polar(cx, cy, r, deg){
-    var rad = (deg - 90) * Math.PI / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-  }
-  function arcPath(r, a0, a1){
-    var p0 = polar(CX,CY,r,a0), p1 = polar(CX,CY,r,a1);
-    var large = (a1 - a0) % 360 > 180 ? 1 : 0;
-    return "M"+p0.x.toFixed(2)+","+p0.y.toFixed(2)+" A"+r+","+r+" 0 "+large+" 1 "+p1.x.toFixed(2)+","+p1.y.toFixed(2);
-  }
-  function wedgePath(rIn, rOut, a0, a1){
-    var large = (a1 - a0) % 360 > 180 ? 1 : 0;
-    var o0 = polar(CX,CY,rOut,a0), o1 = polar(CX,CY,rOut,a1);
-    var i1 = polar(CX,CY,rIn,a1), i0 = polar(CX,CY,rIn,a0);
-    return [
-      "M", o0.x.toFixed(2), o0.y.toFixed(2),
-      "A", rOut, rOut, 0, large, 1, o1.x.toFixed(2), o1.y.toFixed(2),
-      "L", i1.x.toFixed(2), i1.y.toFixed(2),
-      "A", rIn, rIn, 0, large, 0, i0.x.toFixed(2), i0.y.toFixed(2),
-      "Z"
-    ].join(" ");
-  }
+  function tlX(day, monthDays){ return ((day - 0.5) / monthDays) * TL_W; }
 
-  var svg = document.getElementById("wheel");
   var NS = "http://www.w3.org/2000/svg";
   function el(tag, attrs){
     var n = document.createElementNS(NS, tag);
@@ -148,94 +126,104 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     return n;
   }
 
-  function buildWheel(){
-    var wedgeAngle = 360/12;
+  var monthGrid = document.getElementById("monthGrid");
+  var MONTHS = []; // MONTHS[month] = { card, timeline, histGroup, marker }
 
-    // outer rim
-    svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_OUTER,fill:"none",stroke:"var(--border)","stroke-width":1}));
-
+  function buildMonthGrid(){
     CLADES.forEach(function(clade, i){
-      var a0 = i*wedgeAngle, a1 = (i+1)*wedgeAngle;
+      var monthDays = MONTH_DAYS[clade.month];
 
-      var wedge = el("path",{
-        d: wedgePath(R_INNER, R_OUTER, a0, a1),
-        fill: i%2===0 ? "var(--wedge-a)" : "var(--wedge-b)",
-        stroke: "var(--border)", "stroke-width":1,
-        class:"wedge", "data-month": clade.month
+      var card = document.createElement("div");
+      card.className = "month-card " + (i % 2 === 0 ? "stripe-a" : "stripe-b");
+      card.setAttribute("data-month", clade.month);
+
+      var head = document.createElement("div");
+      head.className = "month-card-head";
+
+      var iconSvg = el("svg", {class:"month-icon", viewBox:"-10 -10 20 20", "aria-hidden":"true"});
+      clade.icon(iconSvg, el);
+      head.appendChild(iconSvg);
+
+      var labels = document.createElement("div");
+      labels.className = "month-card-labels";
+      var nameEl = document.createElement("span");
+      nameEl.className = "month-card-name";
+      nameEl.textContent = MONTH_NAMES[clade.month];
+      var cladeEl = document.createElement("span");
+      cladeEl.className = "month-card-clade";
+      cladeEl.textContent = clade.name;
+      labels.appendChild(nameEl);
+      labels.appendChild(cladeEl);
+      head.appendChild(labels);
+      card.appendChild(head);
+
+      var timeline = el("svg", {
+        class:"month-timeline", viewBox:"0 0 " + TL_W + " " + TL_H,
+        preserveAspectRatio:"none", "data-month": clade.month,
+        role:"img", "aria-label": MONTH_NAMES[clade.month] + " day-by-day timeline, click a day to browse it"
       });
-      svg.appendChild(wedge);
+
+      timeline.appendChild(el("line", {x1:0, y1:TL_BASELINE, x2:TL_W, y2:TL_BASELINE, class:"tl-baseline"}));
 
       // one tick per achievable day this month (29-31; see MONTH_DAYS)
-      var wedgeDayCount = MONTH_DAYS[clade.month];
-      for (var d=0; d<wedgeDayCount; d++){
-        var ang = a0 + (d/wedgeDayCount)*wedgeAngle;
+      for (var d = 0; d < monthDays; d++){
+        var x = (d / monthDays) * TL_W;
         var isMajor = (d % 5 === 0);
-        var p0 = polar(CX,CY,R_TICK_IN,ang);
-        var p1 = polar(CX,CY, isMajor ? R_TICK_OUT : R_TICK_OUT-6, ang);
-        svg.appendChild(el("line",{
-          x1:p0.x.toFixed(2), y1:p0.y.toFixed(2), x2:p1.x.toFixed(2), y2:p1.y.toFixed(2),
-          class:"tick"+(isMajor?" major":"")
+        timeline.appendChild(el("line", {
+          x1:x.toFixed(2), y1:TL_BASELINE,
+          x2:x.toFixed(2), y2:(TL_BASELINE + (isMajor ? TL_TICK_MAJOR : TL_TICK_MINOR)).toFixed(2),
+          class:"tick" + (isMajor ? " major" : "")
         }));
       }
 
-      // month label + clade label, centered in wedge, upright
-      var mid = a0 + wedgeAngle/2;
-      var lp = polar(CX,CY,R_LABEL,mid);
-      var t1 = el("text",{x:lp.x.toFixed(2), y:lp.y.toFixed(2), class:"wedge-label", "text-anchor":"middle"});
-      t1.textContent = MONTH_NAMES[clade.month];
-      svg.appendChild(t1);
+      var histGroupEl = el("g", {class:"tl-hist-group"});
+      timeline.appendChild(histGroupEl);
 
-      var cp = polar(CX,CY,R_CLADE,mid);
-      var t2 = el("text",{x:cp.x.toFixed(2), y:cp.y.toFixed(2), class:"wedge-clade", "text-anchor":"middle"});
-      t2.textContent = clade.name;
-      svg.appendChild(t2);
+      // selected-day marker (hidden until a mammal is chosen)
+      var marker = el("g", {class:"day-marker"});
+      marker.appendChild(el("line", {x1:0, y1:TL_MARKER_Y, x2:0, y2:TL_BASELINE, class:"day-marker-line"}));
+      marker.appendChild(el("circle", {cx:0, cy:TL_MARKER_Y, r:5, class:"day-marker-dot"}));
+      timeline.appendChild(marker);
 
-      // small icon glyph near outer edge
-      var ip = polar(CX,CY, R_OUTER-16, mid);
-      var g = el("g",{transform:"translate("+ip.x.toFixed(2)+","+ip.y.toFixed(2)+")", opacity:.8});
-      clade.icon(g, el);
-      svg.appendChild(g);
+      // Click anywhere on this month's timeline to browse that exact date.
+      timeline.addEventListener("click", function(evt){
+        var t = evt.currentTarget;
+        var month = Number(t.getAttribute("data-month"));
+        var pt = t.createSVGPoint();
+        pt.x = evt.clientX; pt.y = evt.clientY;
+        var ctm = t.getScreenCTM();
+        if (!ctm) return;
+        var loc = pt.matrixTransform(ctm.inverse());
+        var mDays = MONTH_DAYS[month];
+        var day = Math.min(mDays, Math.max(1, Math.ceil((loc.x / TL_W) * mDays)));
+        renderBrowse(month, day);
+      });
 
-      // radial divider
-      var d0 = polar(CX,CY,R_INNER,a0), d1 = polar(CX,CY,R_OUTER,a0);
-      svg.appendChild(el("line",{x1:d0.x.toFixed(2),y1:d0.y.toFixed(2),x2:d1.x.toFixed(2),y2:d1.y.toFixed(2), class:"tick major"}));
-    });
+      card.appendChild(timeline);
+      monthGrid.appendChild(card);
 
-    // hub
-    svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_INNER-6,class:"hub-ring"}));
-    svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_HUB,class:"hub"}));
-
-    // needle (hidden until a mammal is chosen)
-    var needleOrigin = "transform-origin:"+CX+"px "+CY+"px;";
-    var needle = el("line",{x1:CX,y1:CY,x2:CX,y2:CY-NEEDLE_LEN,class:"needle",id:"needle",style:needleOrigin+"transform:rotate(0deg);"});
-    svg.appendChild(needle);
-    var needleDot = el("circle",{cx:CX,cy:CY-NEEDLE_LEN,r:5.5,class:"needle-dot",id:"needleDot",style:needleOrigin+"transform:rotate(0deg);"});
-    svg.appendChild(needleDot);
-  }
-
-  function pointNeedle(month, day){
-    var wedgeAngle = 360/12;
-    var ang = month*wedgeAngle + ((day-0.5)/MONTH_DAYS[month])*wedgeAngle;
-    var needle = document.getElementById("needle");
-    var dot = document.getElementById("needleDot");
-    needle.style.transform = "rotate("+ang+"deg)";
-    dot.style.transform = "rotate("+ang+"deg)";
-    needle.classList.add("live");
-    dot.classList.add("live");
-
-    document.querySelectorAll(".wedge").forEach(function(w){
-      w.classList.toggle("active", Number(w.getAttribute("data-month")) === month);
+      MONTHS[clade.month] = {card:card, timeline:timeline, histGroup:histGroupEl, marker:marker};
     });
   }
 
-  // ---------- Species-count histogram around the rim ----------
+  function pointMarker(month, day){
+    var x = tlX(day, MONTH_DAYS[month]);
+    MONTHS.forEach(function(m, mi){
+      var isTarget = mi === month;
+      m.card.classList.toggle("active", isTarget);
+      m.marker.classList.toggle("live", isTarget);
+      if (isTarget) m.marker.setAttribute("transform", "translate(" + x.toFixed(2) + ",0)");
+    });
+  }
+
+  // ---------- Species-count histogram, one strip per month timeline ----------
   // Three display modes:
   //  - "hidden":   no histogram at all
   //  - "scaled":   bar height relative to that MONTH's own busiest day
   //                (every clade's shape is visible, regardless of size)
   //  - "unscaled": bar height relative to the single busiest day anywhere
   //                (true relative sizes — smaller clades read as near-flat)
-  var HIST_COUNTS = null, HIST_GLOBAL_MAX = 0, histGroup = null;
+  var HIST_COUNTS = null, HIST_GLOBAL_MAX = 0;
 
   function computeHistCounts(){
     var counts = [];
@@ -255,42 +243,31 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   }
 
   function renderHistogram(mode){
-    histGroup.innerHTML = "";
-    if (mode === "hidden") return;
+    MONTHS.forEach(function(m, month){
+      m.histGroup.innerHTML = "";
+      if (mode === "hidden") return;
 
-    var wedgeAngle = 360/12;
-
-    // Zero-baseline ring, split into 12 dashed arcs (one per wedge) with a
-    // hairline gap at each month boundary.
-    var wedgeArc = 2*Math.PI*R_HIST_BASE/12;
-    histGroup.appendChild(el("circle",{cx:CX,cy:CY,r:R_HIST_BASE,class:"hist-base",
-      "stroke-dasharray":(wedgeArc*0.97)+" "+(wedgeArc*0.03)}));
-
-    for (var month = 0; month < 12; month++){
-      var a0 = month*wedgeAngle;
       var monthDays = MONTH_DAYS[month];
-      var barSpanDeg = (wedgeAngle/monthDays) * 0.78;
-      var barWidthPx = 2 * R_HIST_BASE * Math.sin((barSpanDeg/2) * Math.PI/180);
-      var wedgeMax = Math.max.apply(null, HIST_COUNTS[month].slice(1, monthDays+1));
-      var denom = mode === "unscaled" ? HIST_GLOBAL_MAX : wedgeMax;
-      var maxReach = mode === "unscaled" ? HIST_BAR_UNIT * HIST_UNSCALED_MULT : HIST_BAR_UNIT;
+      var barWidth = (TL_W / monthDays) * 0.55;
+      var monthMax = Math.max.apply(null, HIST_COUNTS[month].slice(1, monthDays+1));
+      var denom = mode === "unscaled" ? HIST_GLOBAL_MAX : monthMax;
+      var maxReach = mode === "unscaled" ? TL_UNSCALED_MAX : TL_SCALED_MAX;
+
       for (var day = 1; day <= monthDays; day++){
         var count = HIST_COUNTS[month][day];
         if (!count || !denom) continue;
         var len = (count/denom) * maxReach;
-        var ang = a0 + ((day-0.5)/monthDays)*wedgeAngle;
-        var p0 = polar(CX,CY,R_HIST_BASE,ang);
-        var p1 = polar(CX,CY,R_HIST_BASE+len,ang);
+        var x = tlX(day, monthDays);
         var bar = el("line",{
-          x1:p0.x.toFixed(2), y1:p0.y.toFixed(2), x2:p1.x.toFixed(2), y2:p1.y.toFixed(2),
-          class:"hist-bar", "stroke-width":barWidthPx.toFixed(2)
+          x1:x.toFixed(2), y1:TL_BASELINE, x2:x.toFixed(2), y2:(TL_BASELINE-len).toFixed(2),
+          class:"tl-hist-bar", "stroke-width":barWidth.toFixed(2)
         });
         var t = document.createElementNS(NS,"title");
         t.textContent = MONTH_NAMES[month] + " " + day + " (" + letterForDay(day) + ") — " + count + " species";
         bar.appendChild(t);
-        histGroup.appendChild(bar);
+        m.histGroup.appendChild(bar);
       }
-    }
+    });
   }
 
   var HIST_MODE_KEY = "mammal-ephemeris-hist-mode";
@@ -320,21 +297,19 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   function fixedEntries(){ return DATA.filter(function(e){ return e[5] && e[5].holiday; }); }
 
   function drawFixedMarkers(){
-    var wedgeAngle = 360/12;
     fixedEntries().forEach(function(entry){
       var r = compute(entry);
-      var ang = r.month*wedgeAngle + ((r.day-0.5)/MONTH_DAYS[r.month])*wedgeAngle;
+      var x = tlX(r.day, MONTH_DAYS[r.month]);
 
-      // Sits right on the alphabet ring's own tick mark for that day, not
-      // out beyond the histogram.
-      var p = polar(CX,CY,R_TICK_OUT,ang);
-      var g = el("g",{transform:"translate("+p.x.toFixed(2)+","+p.y.toFixed(2)+")",style:"cursor:pointer;"});
+      // Sits above the timeline's own tick mark for that day, not down
+      // among the histogram bars.
+      var g = el("g",{transform:"translate("+x.toFixed(2)+","+TL_STAR_Y+")",style:"cursor:pointer;"});
       g.appendChild(el("path",{d:starPath(),fill:"var(--clay)",stroke:"var(--surface)","stroke-width":1}));
       var titleEl = document.createElementNS(NS,"title");
       titleEl.textContent = entry[5].holiday + " — " + MONTH_NAMES[r.month] + " " + r.day + " (" + r.common + ")";
       g.appendChild(titleEl);
       g.addEventListener("click", function(){ selectEntry(entry); });
-      svg.appendChild(g);
+      MONTHS[r.month].timeline.appendChild(g);
     });
   }
 
@@ -372,9 +347,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   function iconBat(g, elFn){ stroke(g, elFn, {d:"M0,1 Q-3,-4 -8,-2 Q-6,1 -3,1 Q-1,1 0,1 Q1,1 3,1 Q6,1 8,-2 Q3,-4 0,1"}); }
   function iconUngulate(g, elFn){ stroke(g, elFn, {d:"M-3,5 L-4,-2 Q-4,-6 0,-6 Q4,-6 4,-2 L3,5 M-4,-2 L-6,-4 M4,-2 L6,-4"}); }
 
-  buildWheel();
-  histGroup = el("g", {id:"histGroup"});
-  svg.appendChild(histGroup);
+  buildMonthGrid();
   computeHistCounts();
   setHistMode(loadHistMode());
   document.querySelectorAll(".hist-opt").forEach(function(btn){
@@ -526,7 +499,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
 
     loadSpecimenPhoto(r);
 
-    pointNeedle(r.month, r.day);
+    pointMarker(r.month, r.day);
   }
 
   input.addEventListener("input", function(){
@@ -618,11 +591,11 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
       browseResultsBox.appendChild(buildResultRow(entry, pad2(r.hour) + ":" + pad2(r.minute)));
     });
 
-    pointNeedle(month, day);
+    pointMarker(month, day);
   }
 
   function browsePromptState(){
-    browseSummary.textContent = "Pick a month and day above, or click the ring, to see who's celebrating.";
+    browseSummary.textContent = "Pick a month and day above, or click a month's timeline, to see who's celebrating.";
     browseResultsBox.innerHTML = "";
   }
 
@@ -632,28 +605,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   }
   browseMonthSel.addEventListener("change", handleBrowseChange);
   browseDaySel.addEventListener("change", handleBrowseChange);
-
-  // Click anywhere on the wedge ring to browse that exact date.
-  svg.addEventListener("click", function(evt){
-    var pt = svg.createSVGPoint();
-    pt.x = evt.clientX;
-    pt.y = evt.clientY;
-    var ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    var loc = pt.matrixTransform(ctm.inverse());
-    var dx = loc.x - CX, dy = loc.y - CY;
-    var dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < R_INNER || dist > R_HIST_MAX) return; // ignore hub & anything outside the wedges/histogram
-
-    var wedgeAngle = 360/12;
-    var degRaw = Math.atan2(dy, dx) * 180/Math.PI + 90;
-    var deg = ((degRaw % 360) + 360) % 360;
-    var month = Math.floor(deg / wedgeAngle);
-    var within = deg - month*wedgeAngle;
-    var monthDays = MONTH_DAYS[month];
-    var day = Math.min(monthDays, Math.max(1, Math.ceil((within/wedgeAngle) * monthDays)));
-    renderBrowse(month, day);
-  });
 
   browsePromptState();
 
