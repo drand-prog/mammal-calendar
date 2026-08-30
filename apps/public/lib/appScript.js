@@ -633,7 +633,24 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // ---------- FAQ accordion ----------
   function renderFaqs(){
     var list = document.getElementById("faqList");
+    var toggleAllBtn = document.getElementById("faqToggleAll");
     list.innerHTML = "";
+
+    function allOpen(){
+      var items = list.querySelectorAll(".faq-item");
+      return items.length > 0 && Array.prototype.every.call(items, function(el){
+        return el.getAttribute("data-open") === "true";
+      });
+    }
+    function updateToggleAllLabel(){
+      if (toggleAllBtn) toggleAllBtn.textContent = allOpen() ? "Collapse all" : "Expand all";
+    }
+    function setItemOpen(wrap, open){
+      wrap.setAttribute("data-open", open ? "true" : "false");
+      wrap.querySelector(".faq-q").setAttribute("aria-expanded", open ? "true" : "false");
+      wrap.querySelector(".faq-a").hidden = !open;
+    }
+
     FAQS.forEach(function(item){
       var wrap = document.createElement("div");
       wrap.className = "faq-item";
@@ -646,16 +663,21 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
         '<div class="faq-a" hidden></div>';
       wrap.querySelector(".faq-q-text").textContent = item.q;
       wrap.querySelector(".faq-a").textContent = item.a;
-      var btn = wrap.querySelector(".faq-q");
-      var ans = wrap.querySelector(".faq-a");
-      btn.addEventListener("click", function(){
-        var open = wrap.getAttribute("data-open") === "true";
-        wrap.setAttribute("data-open", open ? "false" : "true");
-        btn.setAttribute("aria-expanded", open ? "false" : "true");
-        ans.hidden = open;
+      wrap.querySelector(".faq-q").addEventListener("click", function(){
+        setItemOpen(wrap, wrap.getAttribute("data-open") !== "true");
+        updateToggleAllLabel();
       });
       list.appendChild(wrap);
     });
+
+    if (toggleAllBtn){
+      toggleAllBtn.addEventListener("click", function(){
+        var makeOpen = !allOpen();
+        list.querySelectorAll(".faq-item").forEach(function(wrap){ setItemOpen(wrap, makeOpen); });
+        updateToggleAllLabel();
+      });
+    }
+    updateToggleAllLabel();
   }
   renderFaqs();
 

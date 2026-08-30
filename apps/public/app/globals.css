@@ -459,14 +459,35 @@ img { max-width: 100%; }
     padding-top:2rem;
     border-top:1px solid var(--border);
   }
+  .faq-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:1.25rem;
+  }
   .faq-heading{
     font-family:"Barlow Condensed", sans-serif;
     text-transform:uppercase;
     font-weight:800;
     font-size:1.9rem;
-    margin:.2rem 0 1.25rem;
+    margin:.2rem 0 0;
     letter-spacing:.02em;
   }
+  .faq-toggle-all{
+    flex:none;
+    font-family:"Work Sans",sans-serif;
+    font-size:.72rem;
+    font-weight:600;
+    letter-spacing:.02em;
+    padding:.32rem .65rem;
+    border-radius:3px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .faq-toggle-all:hover{ color:var(--text); border-color:var(--teal); }
 
   .faq-list{ display:flex; flex-direction:column; }
   .faq-item{ border-bottom:1px solid var(--border); }
