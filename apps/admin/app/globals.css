@@ -157,7 +157,19 @@ textarea.input{ resize:vertical; min-height:4.5rem; font-family:inherit; }
   margin-bottom:.9rem;
   display:flex;
   flex-direction:column;
+  transition:opacity .15s ease;
 }
+.faq-row.dragging{ opacity:.4; }
+.faq-row.drag-over{ border-color:var(--accent); box-shadow:0 -2px 0 0 var(--accent); }
 .faq-row-footer{ display:flex; justify-content:flex-end; margin-top:.4rem; }
+.faq-row-head{ display:flex; align-items:center; gap:.4rem; }
+.drag-handle{
+  cursor:grab;
+  color:var(--text-muted);
+  font-size:1rem;
+  line-height:1;
+  user-select:none;
+}
+.drag-handle:active{ cursor:grabbing; }
 
 .login-box{ max-width:360px; margin:4rem auto 0; text-align:center; }

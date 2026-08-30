@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type ContentFields = {
   eyebrow: string;
@@ -218,10 +218,25 @@ function ContentSection({ initialContent }: { initialContent: ContentFields }) {
   );
 }
 
+let faqKeySeq = 0;
+function nextFaqKey() {
+  faqKeySeq += 1;
+  return "faq-" + faqKeySeq;
+}
+
+type KeyedFaq = Faq & { _key: string };
+
 function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
-  const [faqs, setFaqs] = useState<Faq[]>(initialFaqs);
+  const [faqs, setFaqs] = useState<KeyedFaq[]>(() => initialFaqs.map((f) => ({ ...f, _key: nextFaqKey() })));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ text: string; kind?: "ok" | "err" }>({ text: "" });
+  // The dragged item's key lives in a ref, not state: onDrop can fire before
+  // React has re-rendered from onDragStart's setState, so a state-only value
+  // risks reading stale (null). dragKey/overKey stay as state purely to
+  // drive the visual dragging/drag-over classes.
+  const dragKeyRef = useRef<string | null>(null);
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [overKey, setOverKey] = useState<string | null>(null);
 
   function updateFaq(i: number, field: "q" | "a", value: string) {
     setFaqs((list) => list.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)));
@@ -230,7 +245,22 @@ function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
     setFaqs((list) => list.filter((_, idx) => idx !== i));
   }
   function addFaq() {
-    setFaqs((list) => [...list, { q: "", a: "" }]);
+    setFaqs((list) => [...list, { q: "", a: "", _key: nextFaqKey() }]);
+  }
+
+  // Only the hover target (overKey) updates during dragover, so the DOM
+  // stays put while the browser is still hit-testing against it -- the
+  // array itself is only spliced once, on drop.
+  function moveFaq(fromKey: string, toKey: string) {
+    setFaqs((list) => {
+      const fromIndex = list.findIndex((f) => f._key === fromKey);
+      const toIndex = list.findIndex((f) => f._key === toKey);
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return list;
+      const next = list.slice();
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
   }
 
   async function save() {
@@ -245,7 +275,7 @@ function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setFaqs(cleaned);
+        setFaqs(cleaned.map((f) => ({ ...f, _key: nextFaqKey() })));
         setStatus({ text: "Saved — pushed a commit to GitHub. Live in about a minute.", kind: "ok" });
       } else {
         setStatus({ text: data.error || "Couldn't save. Try again.", kind: "err" });
@@ -260,17 +290,53 @@ function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
   return (
     <section className="card">
       <h2 className="section-heading">FAQs</h2>
-      <p className="section-note">Shown on the public site below the wheel.</p>
+      <p className="section-note">Shown on the public site below the wheel. Drag a card by its handle to reorder.</p>
 
       {faqs.map((faq, i) => (
-        <div className="faq-row" key={i}>
-          <label className="field-label" style={{ marginTop: 0 }}>
-            Question
-          </label>
+        <div
+          className={
+            "faq-row" +
+            (dragKey === faq._key ? " dragging" : "") +
+            (overKey === faq._key && dragKey !== faq._key ? " drag-over" : "")
+          }
+          key={faq._key}
+          draggable
+          onDragStart={(e) => {
+            dragKeyRef.current = faq._key;
+            setDragKey(faq._key);
+            e.dataTransfer.effectAllowed = "move";
+          }}
+          onDragEnd={() => {
+            dragKeyRef.current = null;
+            setDragKey(null);
+            setOverKey(null);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDragEnter={() => {
+            if (dragKeyRef.current && dragKeyRef.current !== faq._key) setOverKey(faq._key);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const fromKey = dragKeyRef.current;
+            if (fromKey && fromKey !== faq._key) moveFaq(fromKey, faq._key);
+            dragKeyRef.current = null;
+            setDragKey(null);
+            setOverKey(null);
+          }}
+        >
+          <div className="faq-row-head">
+            <span className="drag-handle" title="Drag to reorder" aria-hidden="true">
+              ⠿
+            </span>
+            <label className="field-label" style={{ marginTop: 0, marginBottom: 0 }}>
+              Question
+            </label>
+          </div>
           <input
             className="input"
             type="text"
             maxLength={200}
+            draggable={false}
             value={faq.q}
             onChange={(e) => updateFaq(i, "q", e.target.value)}
           />
@@ -278,6 +344,7 @@ function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
           <textarea
             className="input"
             maxLength={1000}
+            draggable={false}
             value={faq.a}
             onChange={(e) => updateFaq(i, "a", e.target.value)}
           />
