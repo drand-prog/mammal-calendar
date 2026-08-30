@@ -23,7 +23,10 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     { name:"Ungulates",          formal:"Ungulata (incl. whales)", month:11, icon:iconUngulate }
   ];
   var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  var MONTH_DAYS  = [31,29,31,30,31,30,31,31,30,31,30,31]; // generous Feb, day max is 26 anyway
+  // Highest day each month's clade can actually produce (see dayOf below):
+  // February tops out at 29 (its own "leap day" code, AC), 30-day months
+  // at 30, everything else at the full 31.
+  var MONTH_DAYS  = [31,29,31,30,31,30,31,31,30,31,30,31];
 
   // ---------- Species data ----------
   // Sourced from the ASM Mammal Diversity Database (MDD v2.4), the taxonomic
@@ -44,26 +47,53 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   // ---------- Letter math ----------
   function letterIndex(ch){ return ch.toUpperCase().charCodeAt(0) - 64; } // A=1..Z=26
 
-  function dayOf(species){ return letterIndex(species[0]); } // 1..26
+  // Day comes from the species name's first two letters. A single letter
+  // (any first letter followed by anything other than A-E) gives days
+  // 1-26 directly. But when the name starts with "A" AND its second
+  // letter is A-E, that pair is read as an overflow code for the days a
+  // single letter can't reach: AA=27, AB=28, AC=29 (February's leap day,
+  // when it applies), AD=30 (or the 28th in February, which has no 30th),
+  // AE=31 (or the 28th in February, or the 30th in a 30-day month).
+  function dayOf(species, month){
+    var first = species[0].toUpperCase();
+    var second = species.length > 1 ? species[1].toUpperCase() : "";
+    if (first === "A" && second >= "A" && second <= "E"){
+      switch (second){
+        case "A": return 27;
+        case "B": return 28;
+        case "C": return 29;
+        case "D": return month === 1 ? 28 : 30;
+        case "E":
+          if (month === 1) return 28;
+          return MONTH_DAYS[month] === 30 ? 30 : 31;
+      }
+    }
+    return letterIndex(first); // 1..26
+  }
 
   function hourOf(genus){
     var idx = letterIndex(genus[0]);
-    return idx <= 23 ? idx - 1 : 24; // A..W -> 0..22, X/Y/Z -> 24
+    return idx <= 23 ? idx : 0; // A..W -> 1..23, X/Y/Z -> 0
   }
 
   function minuteOf(species){ return letterIndex(species[species.length - 1]); } // 1..26
 
   function pad2(n){ return String(n).padStart(2,"0"); }
 
+  var EXTENDED_DAY_CODES = ["AA","AB","AC","AD","AE"]; // 27..31
+  function letterForDay(d){
+    return d <= 26 ? String.fromCharCode(64 + d) : EXTENDED_DAY_CODES[d - 27];
+  }
+
   function compute(entry){
     var clade = CLADES[entry[3]];
     var species = entry[2];
     var genus = entry[1];
     var override = entry[5] || null;
-    var day = (override && override.day != null) ? override.day : dayOf(species);
+    var month = (override && override.month != null) ? override.month : clade.month;
+    var day = (override && override.day != null) ? override.day : dayOf(species, month);
     var hour = (override && override.hour != null) ? override.hour : hourOf(genus);
     var minute = (override && override.minute != null) ? override.minute : minuteOf(species);
-    var month = (override && override.month != null) ? override.month : clade.month;
     return {
       common: entry[0], genus: genus, species: species,
       clade: clade, month: month,
@@ -129,9 +159,10 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
       });
       svg.appendChild(wedge);
 
-      // 26 day ticks (alphabet ring)
-      for (var d=0; d<26; d++){
-        var ang = a0 + (d/26)*wedgeAngle;
+      // one tick per achievable day this month (29-31; see MONTH_DAYS)
+      var wedgeDayCount = MONTH_DAYS[clade.month];
+      for (var d=0; d<wedgeDayCount; d++){
+        var ang = a0 + (d/wedgeDayCount)*wedgeAngle;
         var isMajor = (d % 5 === 0);
         var p0 = polar(CX,CY,R_TICK_IN,ang);
         var p1 = polar(CX,CY, isMajor ? R_TICK_OUT : R_TICK_OUT-6, ang);
@@ -184,7 +215,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
 
   function pointNeedle(month, day){
     var wedgeAngle = 360/12;
-    var ang = month*wedgeAngle + ((day-0.5)/26)*wedgeAngle;
+    var ang = month*wedgeAngle + ((day-0.5)/MONTH_DAYS[month])*wedgeAngle;
     var needle = document.getElementById("needle");
     var dot = document.getElementById("needleDot");
     needle.style.transform = "rotate("+ang+"deg)";
@@ -210,7 +241,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     var counts = [];
     for (var m = 0; m < 12; m++){
       counts[m] = [];
-      for (var d = 0; d <= 26; d++) counts[m][d] = 0;
+      for (var d = 0; d <= 31; d++) counts[m][d] = 0;
     }
     DATA.forEach(function(entry){
       var r = compute(entry);
@@ -219,7 +250,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     HIST_COUNTS = counts;
     HIST_GLOBAL_MAX = 0;
     for (var mi = 0; mi < 12; mi++){
-      HIST_GLOBAL_MAX = Math.max(HIST_GLOBAL_MAX, Math.max.apply(null, counts[mi].slice(1, 27)));
+      HIST_GLOBAL_MAX = Math.max(HIST_GLOBAL_MAX, Math.max.apply(null, counts[mi].slice(1, MONTH_DAYS[mi]+1)));
     }
   }
 
@@ -228,8 +259,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     if (mode === "hidden") return;
 
     var wedgeAngle = 360/12;
-    var barSpanDeg = (wedgeAngle/26) * 0.78;
-    var barWidthPx = 2 * R_HIST_BASE * Math.sin((barSpanDeg/2) * Math.PI/180);
 
     // Zero-baseline ring, split into 12 dashed arcs (one per wedge) with a
     // hairline gap at each month boundary.
@@ -239,14 +268,17 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
 
     for (var month = 0; month < 12; month++){
       var a0 = month*wedgeAngle;
-      var wedgeMax = Math.max.apply(null, HIST_COUNTS[month].slice(1, 27));
+      var monthDays = MONTH_DAYS[month];
+      var barSpanDeg = (wedgeAngle/monthDays) * 0.78;
+      var barWidthPx = 2 * R_HIST_BASE * Math.sin((barSpanDeg/2) * Math.PI/180);
+      var wedgeMax = Math.max.apply(null, HIST_COUNTS[month].slice(1, monthDays+1));
       var denom = mode === "unscaled" ? HIST_GLOBAL_MAX : wedgeMax;
       var maxReach = mode === "unscaled" ? HIST_BAR_UNIT * HIST_UNSCALED_MULT : HIST_BAR_UNIT;
-      for (var day = 1; day <= 26; day++){
+      for (var day = 1; day <= monthDays; day++){
         var count = HIST_COUNTS[month][day];
         if (!count || !denom) continue;
         var len = (count/denom) * maxReach;
-        var ang = a0 + ((day-0.5)/26)*wedgeAngle;
+        var ang = a0 + ((day-0.5)/monthDays)*wedgeAngle;
         var p0 = polar(CX,CY,R_HIST_BASE,ang);
         var p1 = polar(CX,CY,R_HIST_BASE+len,ang);
         var bar = el("line",{
@@ -291,7 +323,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     var wedgeAngle = 360/12;
     fixedEntries().forEach(function(entry){
       var r = compute(entry);
-      var ang = r.month*wedgeAngle + ((r.day-0.5)/26)*wedgeAngle;
+      var ang = r.month*wedgeAngle + ((r.day-0.5)/MONTH_DAYS[r.month])*wedgeAngle;
 
       // Sits right on the alphabet ring's own tick mark for that day, not
       // out beyond the histogram.
@@ -466,9 +498,21 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     var bd = document.getElementById("breakdown");
     bd.innerHTML = "";
     var fixedFor = ov && ov.holiday ? ("Fixed for " + ov.holiday) : null;
+
+    var dayDetail;
+    if (ov && ov.day != null){
+      dayDetail = fixedFor;
+    } else {
+      var firstL = species[0].toUpperCase();
+      var secondL = species.length > 1 ? species[1].toUpperCase() : "";
+      dayDetail = (firstL === "A" && secondL >= "A" && secondL <= "E")
+        ? ("First two letters of “" + species + "” are " + firstL + secondL)
+        : ("First letter of “" + species + "” is " + firstL);
+    }
+
     var rows = [
       ["Month", (ov && ov.month != null) ? fixedFor : ("Clade " + r.clade.formal + " governs"), MONTH_NAMES[r.month]],
-      ["Day", (ov && ov.day != null) ? fixedFor : ("First letter of “" + species + "” is " + species[0].toUpperCase()), "the " + ordinal(r.day)],
+      ["Day", dayDetail, "the " + ordinal(r.day)],
       ["Hour", (ov && ov.hour != null) ? fixedFor : ("First letter of “" + genus + "” is " + genus[0].toUpperCase()), pad2(r.hour) + ":00"],
       ["Minute", (ov && ov.minute != null) ? fixedFor : ("Last letter of “" + species + "” is " + species[species.length-1].toUpperCase()), ":" + pad2(r.minute)]
     ];
@@ -519,8 +563,6 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   });
 
   // ---------- Browse by date ----------
-  function letterForDay(d){ return String.fromCharCode(64 + d); } // 1->A ... 26->Z
-
   var browseMonthSel = document.getElementById("browseMonth");
   var browseDaySel = document.getElementById("browseDay");
   var browseSummary = document.getElementById("browseSummary");
@@ -545,7 +587,9 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   dayPlaceholder.disabled = true;
   dayPlaceholder.selected = true;
   browseDaySel.appendChild(dayPlaceholder);
-  for (var d = 1; d <= 26; d++){
+  // 1-31 always shown; a day beyond a given month's real range (e.g. Feb
+  // 31) is still selectable but simply comes back with nobody in it.
+  for (var d = 1; d <= 31; d++){
     var dopt = document.createElement("option");
     dopt.value = d;
     dopt.textContent = d + " — " + letterForDay(d);
@@ -558,7 +602,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
   var DATE_INDEX = [];
   for (var mi = 0; mi < 12; mi++){
     DATE_INDEX[mi] = [];
-    for (var di = 0; di <= 26; di++) DATE_INDEX[mi][di] = [];
+    for (var di = 0; di <= 31; di++) DATE_INDEX[mi][di] = [];
   }
   DATA.forEach(function(entry){
     var r = compute(entry);
@@ -618,7 +662,8 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS) {
     var deg = ((degRaw % 360) + 360) % 360;
     var month = Math.floor(deg / wedgeAngle);
     var within = deg - month*wedgeAngle;
-    var day = Math.min(26, Math.max(1, Math.ceil((within/wedgeAngle) * 26)));
+    var monthDays = MONTH_DAYS[month];
+    var day = Math.min(monthDays, Math.max(1, Math.ceil((within/wedgeAngle) * monthDays)));
     renderBrowse(month, day);
   });
 

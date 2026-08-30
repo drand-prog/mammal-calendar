@@ -1,7 +1,7 @@
 [
   {
     "q": "How is a mammal's date calculated?",
-    "a": "The month comes from its clade — Primates get January, Rodentia gets February, and so on through all twelve. The day is the first letter of the species name (A = the 1st, Z = the 26th). The hour is the first letter of the genus name (A = 0:00 … W = 22:00, X/Y/Z = 24:00), and the minute is the last letter of the species name (A = :01 … Z = :26)."
+    "a": "The month comes from its clade — Primates get January, Rodentia gets February, and so on through all twelve. The day comes from the species name's first two letters: normally the first letter gives the 1st through the 26th (A = 1st … Z = 26th), but a name starting with “A” followed by A–E is read as an overflow code for days a single letter can't reach — AA = 27th, AB = 28th, AC = 29th (February's leap day), AD = 30th (or the 28th in February), AE = 31st (or the 28th in February, or the 30th in a 30-day month). The hour is the first letter of the genus name (A = 1:00 … W = 23:00, X/Y/Z = 0:00), and the minute is the last letter of the species name (A = :01 … Z = :26)."
   },
   {
     "q": "Where does the species list come from?",

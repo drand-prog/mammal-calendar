@@ -2,7 +2,7 @@
   "eyebrow": "An instrument for taxonomic timekeeping",
   "title": "The Mammal Ephemeris",
   "subtitle": "Every mammal has a day. Its clade sets the month; its own name sets the hour, minute, and date. Search a species below to find its moment on the wheel.",
-  "wheelCaptionDefault": "The alphabet ring marks days A–Z around each month; the bars beyond it show how many species share each day, relative to that month's busiest one. Choose a mammal, or click the ring itself, to see who's celebrating.",
+  "wheelCaptionDefault": "The tick ring marks every day a name can land on, from A up through the AA–AE overflow codes; the bars beyond it show how many species share each day, relative to that month's busiest one. Choose a mammal, or click the ring itself, to see who's celebrating.",
   "searchPlaceholder": "Common or scientific name… try “narwhal”",
   "faqEyebrow": "Questions",
   "faqHeading": "Frequently Asked Questions"
