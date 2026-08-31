@@ -457,7 +457,13 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       });
   }
 
-  function selectEntry(entry){
+  // Once the visitor searches, browses, or clicks a day/star themselves,
+  // the auto "closest to right now" refresh (below) backs off and leaves
+  // their choice alone.
+  var userInteracted = false;
+
+  function selectEntry(entry, isAuto){
+    if (!isAuto) userInteracted = true;
     var r = compute(entry);
     input.value = entry[0];
     resultsBox.innerHTML = "";
@@ -658,11 +664,15 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   renderFaqs();
 
   // ---------- Auto-select today's closest mammal ----------
-  // On load, show whichever species lands on today's real month/day and
-  // has the hour:minute closest to right now -- using the visitor's own
-  // local clock. If nobody lands on today at all, the specimen card just
-  // stays hidden until the visitor picks one themselves.
-  (function autoSelectForNow(){
+  // Show whichever species lands on today's real month/day and has the
+  // hour:minute closest to right now -- using the visitor's own local
+  // clock. If nobody lands on today at all, the specimen card just stays
+  // hidden until the visitor picks one themselves. Re-checked every
+  // minute so the card keeps advancing to the next closest species as
+  // the day goes on, as long as the visitor hasn't picked something of
+  // their own in the meantime.
+  function autoSelectForNow(){
+    if (userInteracted) return;
     var now = new Date();
     var todays = DATE_INDEX[now.getMonth()][now.getDate()];
     if (!todays || !todays.length) return;
@@ -674,6 +684,8 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       var diff = Math.abs((r.hour*60 + r.minute) - nowMinutes);
       if (diff < bestDiff){ bestDiff = diff; best = entry; }
     });
-    if (best) selectEntry(best);
-  })();
+    if (best) selectEntry(best, true);
+  }
+  autoSelectForNow();
+  setInterval(autoSelectForNow, 60000);
 }
