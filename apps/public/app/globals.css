@@ -429,6 +429,21 @@ img { max-width: 100%; }
     font-weight:500;
   }
 
+  .add-to-calendar{
+    align-self:flex-start;
+    font-family:"Work Sans",sans-serif;
+    font-size:.72rem;
+    font-weight:600;
+    letter-spacing:.02em;
+    padding:.32rem .65rem;
+    border-radius:3px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .add-to-calendar:hover{ color:var(--text); border-color:var(--teal); }
+
   .specimen-photo{
     position:relative;
     display:none;

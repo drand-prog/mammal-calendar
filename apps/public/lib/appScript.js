@@ -361,11 +361,13 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   var currentMatches = [];
 
   // Clicking anywhere in the specimen card opens its Wikipedia page in a
-  // new tab -- except the photo credit link itself, which already does
-  // that on its own and would otherwise open a second tab.
+  // new tab -- except the photo credit link and the "Add to Calendar"
+  // button, which have their own click behavior and would otherwise also
+  // trigger this one.
   var currentWikiUrl = null;
+  var currentEntry = null;
   specimen.addEventListener("click", function(e){
-    if (!currentWikiUrl || e.target.closest(".photo-credit")) return;
+    if (!currentWikiUrl || e.target.closest(".photo-credit") || e.target.closest(".add-to-calendar")) return;
     window.open(currentWikiUrl, "_blank", "noopener");
   });
 
@@ -487,6 +489,101 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
       });
   }
 
+  // ---------- "Add to Calendar" (.ics download) ----------
+  function isLeapYear(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+
+  // February's overflow-code day 29 doesn't exist in every year, so pick
+  // the nearest leap year to anchor it on; every other month/day is a
+  // real date in any year.
+  function icsAnchorYear(month, day){
+    var year = new Date().getFullYear();
+    if (month === 1 && day === 29) while (!isLeapYear(year)) year++;
+    return year;
+  }
+
+  function icsEscape(text){
+    return String(text).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  }
+
+  // RFC 5545 lines must not exceed 75 octets; continuation lines start
+  // with a space. Splits on UTF-8 byte boundaries so multi-byte
+  // characters (em dashes, curly quotes) never get cut in half.
+  function foldIcsLine(line){
+    var bytes = new TextEncoder().encode(line);
+    if (bytes.length <= 75) return line;
+    var parts = [];
+    var start = 0, limit = 75;
+    while (start < bytes.length){
+      var end = Math.min(start + limit, bytes.length);
+      while (end < bytes.length && (bytes[end] & 0xC0) === 0x80) end--;
+      parts.push(new TextDecoder().decode(bytes.slice(start, end)));
+      start = end;
+      limit = 74; // continuation lines reserve one byte for the leading space
+    }
+    return parts.join("\r\n ");
+  }
+
+  function icsDateTime(y, mo, d, h, mi){
+    return y + pad2(mo + 1) + pad2(d) + "T" + pad2(h) + pad2(mi) + "00";
+  }
+
+  function buildIcs(r, wikiUrl){
+    var now = new Date();
+    var dtstamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) + "T" +
+      pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + pad2(now.getUTCSeconds()) + "Z";
+
+    var year = icsAnchorYear(r.month, r.day);
+    var start = new Date(year, r.month, r.day, r.hour, r.minute, 0);
+    var end = new Date(start.getTime() + 30 * 60000); // 30-minute placeholder duration
+    var dtstart = icsDateTime(start.getFullYear(), start.getMonth(), start.getDate(), start.getHours(), start.getMinutes());
+    var dtend = icsDateTime(end.getFullYear(), end.getMonth(), end.getDate(), end.getHours(), end.getMinutes());
+
+    var ov = r.override;
+    var summary = "Happy " + ((ov && ov.holiday) ? ov.holiday : (r.common + " Day")) + "!";
+    var descLines = [r.genus + " " + r.species];
+    if (r.fact) descLines.push(r.fact);
+    descLines.push(wikiUrl);
+
+    var uid = encodeURIComponent(r.genus + "_" + r.species) + "@calendarofmammals";
+    var lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//The Calendar of Mammals//EN",
+      "CALSCALE:GREGORIAN",
+      "BEGIN:VEVENT",
+      "UID:" + uid,
+      "DTSTAMP:" + dtstamp,
+      "DTSTART:" + dtstart,
+      "DTEND:" + dtend,
+      "RRULE:FREQ=YEARLY",
+      "SUMMARY:" + icsEscape(summary),
+      "DESCRIPTION:" + icsEscape(descLines.join("\n")),
+      "URL:" + wikiUrl,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+    return lines.map(foldIcsLine).join("\r\n") + "\r\n";
+  }
+
+  function downloadIcs(entry){
+    var r = compute(entry);
+    var wikiUrl = "https://en.wikipedia.org/wiki/" + encodeURIComponent(r.genus + "_" + r.species);
+    var blob = new Blob([buildIcs(r, wikiUrl)], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = r.common.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-day.ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  var addToCalendarBtn = document.getElementById("addToCalendar");
+  addToCalendarBtn.addEventListener("click", function(){
+    if (currentEntry) downloadIcs(currentEntry);
+  });
+
   // Once the visitor searches, browses, or clicks a day/star themselves,
   // the auto "closest to right now" refresh (below) backs off and leaves
   // their choice alone.
@@ -494,6 +591,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
 
   function selectEntry(entry, isAuto){
     if (!isAuto) userInteracted = true;
+    currentEntry = entry;
     var r = compute(entry);
     input.value = entry[0];
     resultsBox.innerHTML = "";
