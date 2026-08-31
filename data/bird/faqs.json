@@ -1,0 +1,22 @@
+[
+  {
+    "q": "What is this?",
+    "a": "A companion to The Mammal Ephemeris, for the 10,928 living bird species instead. Every species gets a day, hour, and minute worked out from the letters of its own scientific name. The month comes from its taxonomic order — 46 of them, in this case, rather than mammals' tidy 12 — so an order has to be assigned a month before its species show up on the calendar at all."
+  },
+  {
+    "q": "Why are some days — or whole months — empty?",
+    "a": "Birds split into 46 orders, not 12, so unlike the mammal calendar there's no automatic one-order-per-month mapping. Each order is assigned to a month by hand, in the admin panel, and a species can't appear on the calendar until its order has been. Passeriformes alone — songbirds and other perching birds — is 61% of all bird species, so however the 46 orders get grouped into 12 months, it won't be an even split."
+  },
+  {
+    "q": "How is a bird's date calculated?",
+    "a": "The month comes from its order, once that order has been assigned one. The day comes from the first letter (or, for the handful of species starting \"AA\" through \"AE\", a two-letter code) of the species name — A is the 1st, Z is the 26th, and the AA–AE codes reach the 27th through 31st for months long enough to have them. The hour and minute both come from adding up the letter values (A=1 … Z=26) of the rest of the species name and splitting the total's digits: the last digit is the minute, whatever's left is the hour."
+  },
+  {
+    "q": "Where does the species list come from?",
+    "a": "AviList: The Global Avian Checklist, v2025b (June 2025) — the taxonomy the IOC World Bird List, the Clements/eBird checklist, and BirdLife/HBW jointly adopted to replace their three separate lists. This covers the 10,928 currently-recognized extant species; AviList also tracks 146 recently extinct ones (the dodo, the great auk, the passenger pigeon and the rest), not currently included."
+  },
+  {
+    "q": "Can two birds share the exact same date and time?",
+    "a": "Yes — any two species in the same order whose names produce the same day, hour, and minute by the rules above land on the identical minute. Browse a date below the calendar to see everyone who shares it, once their order has a month."
+  }
+]
