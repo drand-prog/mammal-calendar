@@ -84,12 +84,19 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
     return letterIndex(first); // 1..26
   }
 
-  function hourOf(genus){
-    var idx = letterIndex(genus[0]);
-    return idx <= 23 ? idx : 0; // A..W -> 1..23, X/Y/Z -> 0
+  // Hour and minute both come from the species name: add up the letter
+  // values (A=1..Z=26) of every letter after the first one, then split
+  // that sum's digits -- the last digit is the minute, whatever's left
+  // is the hour. A sum under 10 has nothing to its left, so it's treated
+  // as if zero-padded (4 -> 0:04). Genus no longer plays into the time.
+  function hourMinuteOf(species){
+    var sum = 0;
+    for (var i = 1; i < species.length; i++) sum += letterIndex(species[i]);
+    var str = String(sum);
+    var minute = Number(str.charAt(str.length - 1));
+    var hour = str.length > 1 ? Number(str.slice(0, -1)) : 0;
+    return { hour: hour, minute: minute };
   }
-
-  function minuteOf(species){ return letterIndex(species[species.length - 1]); } // 1..26
 
   function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -105,8 +112,9 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
     var override = entry[5] || null;
     var month = (override && override.month != null) ? override.month : clade.month;
     var day = (override && override.day != null) ? override.day : dayOf(species, month);
-    var hour = (override && override.hour != null) ? override.hour : hourOf(genus);
-    var minute = (override && override.minute != null) ? override.minute : minuteOf(species);
+    var hm = hourMinuteOf(species);
+    var hour = (override && override.hour != null) ? override.hour : hm.hour;
+    var minute = (override && override.minute != null) ? override.minute : hm.minute;
     return {
       common: entry[0], genus: genus, species: species,
       clade: clade, month: month,
