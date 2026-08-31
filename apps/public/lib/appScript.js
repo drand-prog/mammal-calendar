@@ -347,6 +347,15 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   var activeIndex = -1;
   var currentMatches = [];
 
+  // Clicking anywhere in the specimen card opens its Wikipedia page in a
+  // new tab -- except the photo credit link itself, which already does
+  // that on its own and would otherwise open a second tab.
+  var currentWikiUrl = null;
+  specimen.addEventListener("click", function(e){
+    if (!currentWikiUrl || e.target.closest(".photo-credit")) return;
+    window.open(currentWikiUrl, "_blank", "noopener");
+  });
+
   var RESULT_LIMIT = 60;
   var wordBoundary = {}; // cache of RegExp per query, avoids rebuilding per row
 
@@ -486,6 +495,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
     document.getElementById("outDate").textContent = MONTH_NAMES[r.month] + " " + r.day;
     document.getElementById("outTime").textContent = pad2(r.hour) + ":" + pad2(r.minute);
 
+    currentWikiUrl = "https://en.wikipedia.org/wiki/" + encodeURIComponent(r.genus + "_" + r.species);
     loadSpecimenPhoto(r);
 
     pointMarker(r.month, r.day);

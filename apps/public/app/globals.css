@@ -387,7 +387,7 @@ img { max-width: 100%; }
 
   /* ---- Result / specimen card ---- */
   .specimen{ padding:1.5rem; display:none; flex-direction:column; gap:1.15rem; }
-  .specimen.show{ display:flex; }
+  .specimen.show{ display:flex; cursor:pointer; }
   .specimen-name .common{
     font-family:"Barlow Condensed", sans-serif;
     text-transform:uppercase;
