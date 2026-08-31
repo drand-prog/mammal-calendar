@@ -60,6 +60,16 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // ---------- Letter math ----------
   function letterIndex(ch){ return ch.toUpperCase().charCodeAt(0) - 64; } // A=1..Z=26
 
+  // A name starting with "A" whose second letter is A-E reads that pair
+  // as an overflow code (see dayOf below) rather than an ordinary first
+  // letter -- hourMinuteOf needs to know this too, to skip that second
+  // letter the same way.
+  function isOverflowCode(species){
+    var first = species[0].toUpperCase();
+    var second = species.length > 1 ? species[1].toUpperCase() : "";
+    return first === "A" && second >= "A" && second <= "E";
+  }
+
   // Day comes from the species name's first two letters. A single letter
   // (any first letter followed by anything other than A-E) gives days
   // 1-26 directly. But when the name starts with "A" AND its second
@@ -69,9 +79,8 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // AE=31 (or the 28th in February, or the 30th in a 30-day month).
   function dayOf(species, month){
     var first = species[0].toUpperCase();
-    var second = species.length > 1 ? species[1].toUpperCase() : "";
-    if (first === "A" && second >= "A" && second <= "E"){
-      switch (second){
+    if (isOverflowCode(species)){
+      switch (species[1].toUpperCase()){
         case "A": return 27;
         case "B": return 28;
         case "C": return 29;
@@ -89,9 +98,13 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // that sum's digits -- the last digit is the minute, whatever's left
   // is the hour. A sum under 10 has nothing to its left, so it's treated
   // as if zero-padded (4 -> 0:04). Genus no longer plays into the time.
+  // For an overflow-code name (AA/AB/AC/AD/AE -- see isOverflowCode), the
+  // second letter is part of that code, not an ordinary name letter, so
+  // it's skipped too and the sum starts from the third letter.
   function hourMinuteOf(species){
+    var startIdx = isOverflowCode(species) ? 2 : 1;
     var sum = 0;
-    for (var i = 1; i < species.length; i++) sum += letterIndex(species[i]);
+    for (var i = startIdx; i < species.length; i++) sum += letterIndex(species[i]);
     var str = String(sum);
     var minute = Number(str.charAt(str.length - 1));
     var hour = str.length > 1 ? Number(str.slice(0, -1)) : 0;
