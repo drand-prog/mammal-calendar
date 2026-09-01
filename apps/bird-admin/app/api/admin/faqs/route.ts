@@ -4,7 +4,7 @@ import { commitFaqs, type Faq } from "@/lib/github";
 
 const MAX_FAQS = 200;
 const MAX_Q_LEN = 200;
-const MAX_A_LEN = 1000;
+const MAX_A_LEN = 3000;
 
 function validateFaqs(input: unknown): { ok: true; faqs: Faq[] } | { ok: false; error: string } {
   if (!Array.isArray(input)) return { ok: false, error: "Expected a list of FAQs." };

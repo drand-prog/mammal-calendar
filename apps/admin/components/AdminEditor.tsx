@@ -339,7 +339,7 @@ function FaqSection({ initialFaqs }: { initialFaqs: Faq[] }) {
           <label className="field-label">Answer</label>
           <textarea
             className="input"
-            maxLength={1000}
+            maxLength={3000}
             draggable={false}
             value={faq.a}
             onChange={(e) => updateFaq(i, "a", e.target.value)}
