@@ -9,7 +9,7 @@
 // favicon in app/api/favicon/route.tsx, independent of any assignment.
 export const ORDER_EMOJI: Record<string, string[]> = {
   "Passeriformes (Tyranni)": ["🌈"],
-  "Passeriformes (basal Australasian)": ["🪶"],
+  "Passeriformes (basal Australasian)": ["🪉"],
   "Passeriformes (Corvides)": ["♜️"],
   "Passeriformes (Muscicapida)": ["🎶"],
   "Passeriformes (Sylviida)": ["🪶"],
