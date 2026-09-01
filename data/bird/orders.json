@@ -51,7 +51,7 @@
     "name": "Woodpeckers, toucans & allies",
     "formal": "Piciformes",
     "count": 382,
-    "month": null
+    "month": 6
   },
   {
     "name": "Shorebirds, gulls & auks",
@@ -75,19 +75,19 @@
     "name": "Hawks, eagles & Old World vultures",
     "formal": "Accipitriformes",
     "count": 250,
-    "month": null
+    "month": 6
   },
   {
     "name": "Owls",
     "formal": "Strigiformes",
     "count": 238,
-    "month": null
+    "month": 6
   },
   {
     "name": "Kingfishers, bee-eaters & rollers",
     "formal": "Coraciiformes",
     "count": 183,
-    "month": null
+    "month": 6
   },
   {
     "name": "Waterfowl -- ducks, geese & swans",
@@ -129,7 +129,7 @@
     "name": "Hornbills & hoopoes",
     "formal": "Bucerotiformes",
     "count": 74,
-    "month": null
+    "month": 6
   },
   {
     "name": "Falcons & caracaras",
@@ -141,7 +141,7 @@
     "name": "Jacamars & puffbirds",
     "formal": "Galbuliformes",
     "count": 55,
-    "month": null
+    "month": 6
   },
   {
     "name": "Cormorants, boobies & frigatebirds",
@@ -153,7 +153,7 @@
     "name": "Trogons & quetzals",
     "formal": "Trogoniformes",
     "count": 47,
-    "month": null
+    "month": 6
   },
   {
     "name": "Tinamous",
@@ -225,13 +225,13 @@
     "name": "New World vultures & condors",
     "formal": "Cathartiformes",
     "count": 6,
-    "month": null
+    "month": 6
   },
   {
     "name": "Mousebirds",
     "formal": "Coliiformes",
     "count": 6,
-    "month": null
+    "month": 6
   },
   {
     "name": "Kiwi",
@@ -303,6 +303,6 @@
     "name": "Cuckoo-roller",
     "formal": "Leptosomiformes",
     "count": 1,
-    "month": null
+    "month": 6
   }
 ]
