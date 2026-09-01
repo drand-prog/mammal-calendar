@@ -28,7 +28,7 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     var pool = [];
     ORDERS.forEach(function(o){
       if (o.month !== month) return;
-      var options = ORDER_EMOJI[o.formal] || ["🐦"];
+      var options = ORDER_EMOJI[o.formal] || [];
       pool = pool.concat(options);
     });
     if (!pool.length) return null; // nothing assigned to this month yet
