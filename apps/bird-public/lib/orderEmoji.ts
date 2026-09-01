@@ -19,7 +19,7 @@ export const ORDER_EMOJI: Record<string, string[]> = {
   Columbiformes: ["🕊️", "🦤"],
   Galliformes: ["🐓", "🐔", "🦃", "🦚"],
   Accipitriformes: ["🦅"],
-  Strigiformes: ["🦉"],
+  Strigiformes: ["🐦"],
   Coraciiformes: ["🐦"],
   Anseriformes: ["🦆", "🦢", "🪿"],
   Gruiformes: ["🐦"],
