@@ -51,7 +51,7 @@ data/                          mammal data, shared between apps/public and apps/
   content.json                   site text (title, subtitle, etc.) — admin edits this
   bird/                          bird data, shared between apps/bird-public and apps/bird-admin
     species.json                   all 10,928 species entries (public reads only)
-    orders.json                    the 46 orders' month assignments — bird-admin edits this
+    orders.json                    the 51 groups' month assignments (45 orders + 6 Passeriformes clades) — bird-admin edits this
     faqs.json                      FAQ list — bird-admin edits this
     content.json                   site text — bird-admin edits this
 
@@ -180,17 +180,23 @@ for a taxon that doesn't split as neatly into twelve.
 ### Why this one needs an admin step the mammal calendar didn't
 
 Mammals split cleanly into 12 major clades, one per month, hard-coded once
-and done. Birds split into **46 taxonomic orders** — there's no natural
-1-to-1 mapping onto 12 months, and `Passeriformes` (songbirds and other
-perching birds) alone accounts for 61% of all 10,928 species, so however
-the 46 get grouped, it won't be an even split either.
+and done. Birds split into 46 taxonomic orders — there's no natural 1-to-1
+mapping onto 12 months — and `Passeriformes` (songbirds and other perching
+birds) alone accounts for 61% of all 10,928 species, so a plain per-order
+split would still dump three out of every five birds into whatever month
+got Passeriformes.
 
-Rather than guess at a grouping, `data/bird/orders.json` starts with every
-order's `month` set to `null`, and **a species doesn't appear anywhere on
-the public calendar — search excepted — until its order has been assigned
+`data/bird/orders.json` fixes that by not treating Passeriformes as one
+group: it's split into its six deepest evolutionary lineages (Tyranni,
+the basal Australasian radiation, Corvides, Muscicapida, Sylviida, and
+Passerida — see [Oliveros et al. 2019](https://doi.org/10.1073/pnas.1813206116)),
+each assignable to its own month like any other order. That makes **51
+groups** in total (45 remaining orders + 6 Passeriformes clades), every one
+starting with `month` set to `null`. **A species doesn't appear anywhere on
+the public calendar — search excepted — until its group has been assigned
 one**, in `apps/bird-admin`'s "Order months" section. Assign a few,
 redeploy, and those species' days start filling in; the calendar fills in
-gradually as more orders get placed, rather than needing all 46 decided up
+gradually as more groups get placed, rather than needing all 51 decided up
 front.
 
 ### How it works

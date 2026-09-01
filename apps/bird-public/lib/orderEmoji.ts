@@ -6,7 +6,12 @@
 // ALL_ORDER_EMOJI (all pools, flattened and deduped) drives the rotating
 // favicon in app/api/favicon/route.tsx, independent of any assignment.
 export const ORDER_EMOJI: Record<string, string[]> = {
-  Passeriformes: ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Tyranni)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (basal Australasian)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Corvides)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Muscicapida)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Sylviida)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Passerida)": ["🐦", "🐦‍⬛", "🪶"],
   Apodiformes: ["🐦"],
   Psittaciformes: ["🦜"],
   Piciformes: ["🐦"],

@@ -199,9 +199,10 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
     <section className="card">
       <h2 className="section-heading">Order months</h2>
       <p className="section-note">
-        Birds split into {initialOrders.length} taxonomic orders, not a tidy twelve, so each one needs
-        assigning to a month by hand before its species show up on the public calendar. More than one
-        order can share a month.
+        Birds split into {initialOrders.length} groups — 45 taxonomic orders, plus Passeriformes broken
+        into its six deepest evolutionary lineages since it alone is 61% of all species — not a tidy
+        twelve, so each one needs assigning to a month by hand before its species show up on the public
+        calendar. More than one group can share a month.
       </p>
 
       <p className="orders-summary">
