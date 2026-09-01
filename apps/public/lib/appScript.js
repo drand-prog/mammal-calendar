@@ -60,37 +60,32 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // ---------- Letter math ----------
   function letterIndex(ch){ return ch.toUpperCase().charCodeAt(0) - 64; } // A=1..Z=26
 
-  // A name starting with "A" whose second letter is A-E reads that pair
-  // as an overflow code (see dayOf below) rather than an ordinary first
-  // letter -- hourMinuteOf needs to know this too, to skip that second
-  // letter the same way.
-  function isOverflowCode(species){
-    var first = species[0].toUpperCase();
-    var second = species.length > 1 ? species[1].toUpperCase() : "";
-    return first === "A" && second >= "A" && second <= "E";
-  }
-
-  // Day comes from the species name's first two letters. A single letter
-  // (any first letter followed by anything other than A-E) gives days
-  // 1-26 directly. But when the name starts with "A" AND its second
-  // letter is A-E, that pair is read as an overflow code for the days a
-  // single letter can't reach: AA=27, AB=28, AC=29 (February's leap day,
-  // when it applies), AD=30 (or the 28th in February, which has no 30th),
-  // AE=31 (or the 28th in February, or the 30th in a 30-day month).
+  // Day comes from the species name's first letter (1-26) UNLESS the name
+  // contains one of nine rarer letter patterns anywhere in it, in which case
+  // that pattern wins outright over the first letter: a bare Q/X/Y/Z reaches
+  // the days a single letter can't (17/24/25/26 -- already where a name
+  // literally starting with that letter would land, just no longer requiring
+  // it to start there), and a doubled N/O/R/S/T reaches the days beyond 26
+  // that used to come from the old AA-AE start-of-name codes. Each doubled
+  // letter is capped by how long the month actually is: OO (28) never fires
+  // in February since nothing there is longer than 28 days; SS (30) never
+  // fires in a 30-day month, for the same reason -- so the search simply
+  // stops before checking RR/SS/TT (or SS/TT) once the month is too short
+  // for them to mean anything.
   function dayOf(species, month){
-    var first = species[0].toUpperCase();
-    if (isOverflowCode(species)){
-      switch (species[1].toUpperCase()){
-        case "A": return 27;
-        case "B": return 28;
-        case "C": return 29;
-        case "D": return month === 1 ? 28 : 30;
-        case "E":
-          if (month === 1) return 28;
-          return MONTH_DAYS[month] === 30 ? 30 : 31;
-      }
-    }
-    return letterIndex(first); // 1..26
+    var name = species.toUpperCase();
+    if (name.indexOf("Q") !== -1) return 17;
+    if (name.indexOf("X") !== -1) return 24;
+    if (name.indexOf("Y") !== -1) return 25;
+    if (name.indexOf("Z") !== -1) return 26;
+    if (name.indexOf("NN") !== -1) return 27;
+    if (name.indexOf("OO") !== -1) return 28;
+    if (month === 1) return letterIndex(species[0]); // February stops here
+    if (name.indexOf("RR") !== -1) return 29;
+    if (name.indexOf("SS") !== -1) return 30;
+    if (MONTH_DAYS[month] === 30) return letterIndex(species[0]); // 30-day months stop here
+    if (name.indexOf("TT") !== -1) return 31;
+    return letterIndex(species[0]);
   }
 
   // Hour and minute both come from the species name: add up the letter
@@ -98,13 +93,13 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
   // that sum's digits -- the last digit is the minute, whatever's left
   // is the hour. A sum under 10 has nothing to its left, so it's treated
   // as if zero-padded (4 -> 0:04). Genus no longer plays into the time.
-  // For an overflow-code name (AA/AB/AC/AD/AE -- see isOverflowCode), the
-  // second letter is part of that code, not an ordinary name letter, so
-  // it's skipped too and the sum starts from the third letter.
+  // Unlike day, this always starts from the second letter -- the letter
+  // patterns dayOf looks for can appear anywhere in the name (including
+  // inside the part that feeds this sum) without being "claimed" by day
+  // the way the old two-letter overflow codes were.
   function hourMinuteOf(species){
-    var startIdx = isOverflowCode(species) ? 2 : 1;
     var sum = 0;
-    for (var i = startIdx; i < species.length; i++) sum += letterIndex(species[i]);
+    for (var i = 1; i < species.length; i++) sum += letterIndex(species[i]);
     var str = String(sum);
     var minute = Number(str.charAt(str.length - 1));
     var hour = str.length > 1 ? Number(str.slice(0, -1)) : 0;
@@ -113,7 +108,7 @@ export function initMammalCalendarApp(SPECIES_DATA, INITIAL_FAQS, BROWSE_PROMPT)
 
   function pad2(n){ return String(n).padStart(2,"0"); }
 
-  var EXTENDED_DAY_CODES = ["AA","AB","AC","AD","AE"]; // 27..31
+  var EXTENDED_DAY_CODES = ["NN","OO","RR","SS","TT"]; // 27..31
   function letterForDay(d){
     return d <= 26 ? String.fromCharCode(64 + d) : EXTENDED_DAY_CODES[d - 27];
   }
