@@ -9,13 +9,13 @@
     "name": "New World & Old World suboscines, plus NZ wrens",
     "formal": "Passeriformes (Tyranni)",
     "count": 1393,
-    "month": null
+    "month": 5
   },
   {
     "name": "Old World warblers, babblers, swallows & larks",
     "formal": "Passeriformes (Sylviida)",
     "count": 1315,
-    "month": null
+    "month": 9
   },
   {
     "name": "Old World flycatchers, thrushes & starlings",
@@ -27,7 +27,7 @@
     "name": "Crows, birds-of-paradise, shrikes & allies",
     "formal": "Passeriformes (Corvides)",
     "count": 842,
-    "month": null
+    "month": 2
   },
   {
     "name": "Swifts & hummingbirds",
@@ -39,7 +39,7 @@
     "name": "Lyrebirds, bowerbirds, honeyeaters & allies",
     "formal": "Passeriformes (basal Australasian)",
     "count": 432,
-    "month": null
+    "month": 8
   },
   {
     "name": "Parrots",
