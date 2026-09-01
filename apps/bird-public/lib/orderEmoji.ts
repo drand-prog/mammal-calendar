@@ -12,7 +12,7 @@ export const ORDER_EMOJI: Record<string, string[]> = {
   "Passeriformes (basal Australasian)": ["🪉"],
   "Passeriformes (Corvides)": ["♜️"],
   "Passeriformes (Muscicapida)": ["🎶"],
-  "Passeriformes (Sylviida)": ["🪶"],
+  "Passeriformes (Sylviida)": ["🥥"],
   "Passeriformes (Passerida)": ["🎶"],
   Apodiformes: [],
   Psittaciformes: ["🦜"],
