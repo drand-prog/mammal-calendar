@@ -75,3 +75,12 @@ export async function commitOrders(orders: OrderEntry[]) {
     `Update bird order→month assignments (${assigned}/${orders.length} orders assigned) via admin panel`
   );
 }
+
+export async function commitMonthDescriptions(descriptions: string[]) {
+  const filled = descriptions.filter((d) => d.trim()).length;
+  return commitJsonFile(
+    "data/bird/monthDescriptions.json",
+    descriptions,
+    `Update bird month descriptions (${filled}/12 filled in) via admin panel`
+  );
+}

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import speciesData from "../../../data/bird/species.json";
 import orderData from "../../../data/bird/orders.json";
 import initialFaqs from "../../../data/bird/faqs.json";
+import monthDescriptions from "../../../data/bird/monthDescriptions.json";
 import { BODY_HTML } from "@/lib/bodyMarkup";
 import { initBirdCalendarApp } from "@/lib/appScript";
 
@@ -41,7 +42,7 @@ export default function BirdCalendarApp({ content }: { content: SiteContent }) {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    initBirdCalendarApp(speciesData, orderData, initialFaqs, content.browsePrompt);
+    initBirdCalendarApp(speciesData, orderData, initialFaqs, content.browsePrompt, monthDescriptions);
   }, []);
 
   // The markup below is the same static structure the mammal app renders,

@@ -37,10 +37,12 @@ export default function AdminEditor({
   initialContent,
   initialFaqs,
   initialOrders,
+  initialMonthDescriptions,
 }: {
   initialContent: ContentFields;
   initialFaqs: Faq[];
   initialOrders: OrderEntry[];
+  initialMonthDescriptions: string[];
 }) {
   const [session, setSession] = useState<Session>("checking");
   const [password, setPassword] = useState("");
@@ -134,6 +136,7 @@ export default function AdminEditor({
       </header>
 
       <OrdersSection initialOrders={initialOrders} />
+      <MonthDescriptionsSection initialMonthDescriptions={initialMonthDescriptions} />
       <ContentSection initialContent={initialContent} />
       <FaqSection initialFaqs={initialFaqs} />
 
@@ -259,6 +262,79 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
       <div className="row">
         <button className="btn" onClick={save} disabled={saving}>
           Save order months
+        </button>
+        {status.text && <span className={"status" + (status.kind ? " " + status.kind : "")}>{status.text}</span>}
+      </div>
+    </section>
+  );
+}
+
+const MAX_DESCRIPTION_LEN = 300;
+
+function MonthDescriptionsSection({ initialMonthDescriptions }: { initialMonthDescriptions: string[] }) {
+  const [descriptions, setDescriptions] = useState<string[]>(initialMonthDescriptions);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ text: string; kind?: "ok" | "err" }>({ text: "" });
+
+  function setDescription(i: number, value: string) {
+    setDescriptions((list) => list.map((d, idx) => (idx === i ? value : d)));
+  }
+
+  async function save() {
+    setSaving(true);
+    setStatus({ text: "Saving…" });
+    try {
+      const res = await fetch("/api/admin/month-descriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descriptions }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus({ text: "Saved — pushed a commit to GitHub. Live in about a minute.", kind: "ok" });
+      } else {
+        setStatus({ text: data.error || "Couldn't save. Try again.", kind: "err" });
+      }
+    } catch {
+      setStatus({ text: "Couldn't reach the server. Try again.", kind: "err" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="card">
+      <h2 className="section-heading">Month descriptions</h2>
+      <p className="section-note">
+        A plain-language blurb shown under each month on the public calendar, below the list of
+        assigned orders. Leave a month blank to show nothing extra there.
+      </p>
+
+      {MONTH_NAMES.map((name, i) => {
+        const value = descriptions[i] ?? "";
+        const over = value.length > MAX_DESCRIPTION_LEN;
+        return (
+          <div key={name}>
+            <label className="field-label" htmlFor={"month-desc-" + i}>
+              {name}
+            </label>
+            <textarea
+              id={"month-desc-" + i}
+              className="input"
+              value={value}
+              maxLength={MAX_DESCRIPTION_LEN + 20}
+              onChange={(e) => setDescription(i, e.target.value)}
+            />
+            <div className={"char-count" + (over ? " over" : "")}>
+              {value.length} / {MAX_DESCRIPTION_LEN}
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="row">
+        <button className="btn" onClick={save} disabled={saving}>
+          Save month descriptions
         </button>
         {status.text && <span className={"status" + (status.kind ? " " + status.kind : "")}>{status.text}</span>}
       </div>

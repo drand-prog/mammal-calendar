@@ -11,5 +11,13 @@ export default function Page() {
   const content = loadJson<ContentFields>("data/bird/content.json");
   const faqs = loadJson<Faq[]>("data/bird/faqs.json");
   const orders = loadJson<OrderEntry[]>("data/bird/orders.json");
-  return <AdminEditor initialContent={content} initialFaqs={faqs} initialOrders={orders} />;
+  const monthDescriptions = loadJson<string[]>("data/bird/monthDescriptions.json");
+  return (
+    <AdminEditor
+      initialContent={content}
+      initialFaqs={faqs}
+      initialOrders={orders}
+      initialMonthDescriptions={monthDescriptions}
+    />
+  );
 }

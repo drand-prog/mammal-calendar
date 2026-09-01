@@ -8,7 +8,7 @@
 // eslint-disable
 import { ORDER_EMOJI } from "./orderEmoji";
 
-export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROWSE_PROMPT) {
+export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROWSE_PROMPT, MONTH_DESCRIPTIONS) {
 "use strict";
 
   "use strict";
@@ -175,6 +175,14 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
         labels.appendChild(orderEl);
         head.appendChild(labels);
         card.appendChild(head);
+
+        var description = (MONTH_DESCRIPTIONS || [])[month];
+        if (description){
+          var descEl = document.createElement("p");
+          descEl.className = "month-card-description";
+          descEl.textContent = description;
+          card.appendChild(descEl);
+        }
 
         var dayGrid = document.createElement("div");
         dayGrid.className = "day-grid";
