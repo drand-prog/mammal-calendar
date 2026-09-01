@@ -63,7 +63,7 @@
     "name": "Waterfowl -- ducks, geese & swans",
     "formal": "Anseriformes",
     "count": 168,
-    "month": null
+    "month": 0
   },
   {
     "name": "Cranes, rails & allies",
@@ -153,7 +153,7 @@
     "name": "Grebes",
     "formal": "Podicipediformes",
     "count": 19,
-    "month": null
+    "month": 0
   },
   {
     "name": "Penguins",
@@ -189,7 +189,7 @@
     "name": "Flamingos",
     "formal": "Phoenicopteriformes",
     "count": 6,
-    "month": null
+    "month": 0
   },
   {
     "name": "New World vultures & condors",
