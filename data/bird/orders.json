@@ -33,7 +33,7 @@
     "name": "Pigeons & doves",
     "formal": "Columbiformes",
     "count": 334,
-    "month": null
+    "month": 11
   },
   {
     "name": "Fowl -- pheasants, grouse & quail",
@@ -75,7 +75,7 @@
     "name": "Cuckoos",
     "formal": "Cuculiformes",
     "count": 154,
-    "month": null
+    "month": 11
   },
   {
     "name": "Albatrosses, shearwaters & petrels",
@@ -135,13 +135,13 @@
     "name": "Bustards",
     "formal": "Otidiformes",
     "count": 26,
-    "month": null
+    "month": 11
   },
   {
     "name": "Turacos",
     "formal": "Musophagiformes",
     "count": 23,
-    "month": null
+    "month": 11
   },
   {
     "name": "Storks",
@@ -165,7 +165,7 @@
     "name": "Sandgrouse",
     "formal": "Pterocliformes",
     "count": 16,
-    "month": null
+    "month": 11
   },
   {
     "name": "Frogmouths",
@@ -225,7 +225,7 @@
     "name": "Mesites",
     "formal": "Mesitornithiformes",
     "count": 3,
-    "month": null
+    "month": 11
   },
   {
     "name": "Tropicbirds",
