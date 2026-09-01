@@ -1,14 +1,6 @@
 [
   {
     "q": "What is this?",
-    "a": "A companion to The Mammal Ephemeris, for the 10,928 living bird species instead. Every species gets a day, hour, and minute worked out from the letters of its own scientific name. The month comes from its taxonomic order — 46 of them, in this case, rather than mammals' tidy 12 — except for Passeriformes (songbirds and other perching birds), which alone is 61% of all bird species and so is split into six finer evolutionary lineages instead of being left as one lump, for 51 groups in total. Each of those groups has to be assigned a month before its species show up on the calendar."
-  },
-  {
-    "q": "How is a bird's date calculated?",
-    "a": "The month comes from its order, once that order has been assigned one. The day comes from the first letter (or, for the handful of species starting \"AA\" through \"AE\", a two-letter code) of the species name — A is the 1st, Z is the 26th, and the AA–AE codes reach the 27th through 31st for months long enough to have them. The hour and minute both come from adding up the letter values (A=1 … Z=26) of the rest of the species name and splitting the total's digits: the last digit is the minute, whatever's left is the hour."
-  },
-  {
-    "q": "Where does the species list come from?",
-    "a": "AviList: The Global Avian Checklist, v2025b (June 2025) — the taxonomy the IOC World Bird List, the Clements/eBird checklist, and BirdLife/HBW jointly adopted to replace their three separate lists. This covers the 10,928 currently-recognized extant species; AviList also tracks 146 recently extinct ones (the dodo, the great auk, the passenger pigeon and the rest), not currently included."
+    "a": "This calendar is the graduate dissertation of an expert in Homo sapiens culture and society. \n\nHomo sapiens was a species of literate primate on the planet Sol-3.\n\nBecause this species lived so long ago, and so far away, we have to make some educated guesses about their traditions based on the few facts we know for certain.\n\nFortunately, we have strong evidence that humans shared Sol-3 with at least 10,928 bird species.\n\nAnd we know that they used a calendar of 365 days and 12 months.\n\nIt stands to reason that they would designate specific days to celebrate each bird species.\n\nCompeting theories about a \"Calendar of Mammals\" are not to be trusted!"
   }
 ]
