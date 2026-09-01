@@ -515,7 +515,6 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
 
     document.getElementById("outGreeting").textContent = "Happy " + r.common + " Day!";
     document.getElementById("outSci").textContent = r.genus + " " + r.species;
-    document.getElementById("outOrder").textContent = r.order.name;
 
     if (r.month != null){
       document.getElementById("outDate").textContent = MONTH_NAMES[r.month] + " " + r.day;

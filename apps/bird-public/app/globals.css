@@ -346,12 +346,6 @@ img { max-width: 100%; }
     font-size:1rem;
     margin-top:.15rem;
   }
-  .specimen-name .order{
-    font-family:"Work Sans",sans-serif;
-    color:var(--text-muted);
-    font-size:.76rem;
-    margin-top:.25rem;
-  }
 
   .date-block{
     background:var(--surface-2);
