@@ -166,23 +166,18 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
         var nameEl = document.createElement("span");
         nameEl.className = "month-card-name";
         nameEl.textContent = MONTH_NAMES[month];
+        var description = (MONTH_DESCRIPTIONS || [])[month];
         var orderEl = document.createElement("span");
         orderEl.className = "month-card-order" + (assignedHere.length ? "" : " unassigned");
-        orderEl.textContent = assignedHere.length
+        orderEl.textContent = description
+          ? description
+          : assignedHere.length
           ? assignedHere.map(function(o){ return o.name; }).join(" · ")
           : "No orders assigned yet";
         labels.appendChild(nameEl);
         labels.appendChild(orderEl);
         head.appendChild(labels);
         card.appendChild(head);
-
-        var description = (MONTH_DESCRIPTIONS || [])[month];
-        if (description){
-          var descEl = document.createElement("p");
-          descEl.className = "month-card-description";
-          descEl.textContent = description;
-          card.appendChild(descEl);
-        }
 
         var dayGrid = document.createElement("div");
         dayGrid.className = "day-grid";

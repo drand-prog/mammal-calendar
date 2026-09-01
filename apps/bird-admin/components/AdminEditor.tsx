@@ -306,8 +306,8 @@ function MonthDescriptionsSection({ initialMonthDescriptions }: { initialMonthDe
     <section className="card">
       <h2 className="section-heading">Month descriptions</h2>
       <p className="section-note">
-        A plain-language blurb shown under each month on the public calendar, below the list of
-        assigned orders. Leave a month blank to show nothing extra there.
+        Replaces the auto-generated list of assigned order names shown under each month's name on
+        the public calendar. Leave a month blank to fall back to that auto-generated list.
       </p>
 
       {MONTH_NAMES.map((name, i) => {
