@@ -52,12 +52,16 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   // that pattern wins outright over the first letter: a bare Q/X/Y/Z reaches
   // the days a single letter can't (17/24/25/26 -- already where a name
   // literally starting with that letter would land, just no longer requiring
-  // it to start there), and a doubled N/O/R/S/T reaches the days beyond 26
-  // that used to come from the old AA-AE start-of-name codes. Each doubled
+  // it to start there), and a doubled N/O/P/R/S reaches the days beyond 26
+  // that used to come from the old AA-AE start-of-name codes. (Not T: a
+  // doubled T is common enough to catch names that need to fall through to
+  // their first letter for other reasons -- e.g. the mammal calendar's Pica
+  // nuttallii, pinned to March 14 by its "N" for the Pi Day FAQ, contains
+  // "TT" and would otherwise get hijacked to day 31 instead.) Each doubled
   // letter is capped by how long the month actually is: OO (28) never fires
-  // in February since nothing there is longer than 28 days; SS (30) never
+  // in February since nothing there is longer than 28 days; RR (30) never
   // fires in a 30-day month, for the same reason -- so the search simply
-  // stops before checking RR/SS/TT (or SS/TT) once the month is too short
+  // stops before checking PP/RR/SS (or RR/SS) once the month is too short
   // for them to mean anything.
   function dayOf(species, month){
     var name = species.toUpperCase();
@@ -68,10 +72,10 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     if (name.indexOf("NN") !== -1) return 27;
     if (name.indexOf("OO") !== -1) return 28;
     if (month === 1) return letterIndex(species[0]); // February stops here
-    if (name.indexOf("RR") !== -1) return 29;
-    if (name.indexOf("SS") !== -1) return 30;
+    if (name.indexOf("PP") !== -1) return 29;
+    if (name.indexOf("RR") !== -1) return 30;
     if (MONTH_DAYS[month] === 30) return letterIndex(species[0]); // 30-day months stop here
-    if (name.indexOf("TT") !== -1) return 31;
+    if (name.indexOf("SS") !== -1) return 31;
     return letterIndex(species[0]);
   }
 
@@ -94,7 +98,7 @@ export function initBirdCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, BROW
 
   function pad2(n){ return String(n).padStart(2,"0"); }
 
-  var EXTENDED_DAY_CODES = ["NN","OO","RR","SS","TT"]; // 27..31
+  var EXTENDED_DAY_CODES = ["NN","OO","PP","RR","SS"]; // 27..31
   function letterForDay(d){
     return d <= 26 ? String.fromCharCode(64 + d) : EXTENDED_DAY_CODES[d - 27];
   }
