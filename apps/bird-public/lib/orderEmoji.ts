@@ -7,6 +7,10 @@
 // shows a glyph actually chosen for one of its orders, or no badge at all.
 // ALL_ORDER_EMOJI (all pools, flattened and deduped) drives the rotating
 // favicon in app/api/favicon/route.tsx, independent of any assignment.
+// A few picks below (rainbow for Tyranni/June, rook for Corvides/March, harp
+// for basal Australasian/September, coconut for Sylviida/October) are
+// arbitrary aesthetic choices rather than taxonomic hints -- don't read
+// meaning into them.
 export const ORDER_EMOJI: Record<string, string[]> = {
   "Passeriformes (Tyranni)": ["🌈"],
   "Passeriformes (basal Australasian)": ["🪉"],
