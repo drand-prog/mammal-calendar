@@ -8,7 +8,7 @@
 export const ORDER_EMOJI: Record<string, string[]> = {
   "Passeriformes (Tyranni)": ["🌈"],
   "Passeriformes (basal Australasian)": ["🐦", "🐦‍⬛", "🪶"],
-  "Passeriformes (Corvides)": ["🐦", "🐦‍⬛", "🪶"],
+  "Passeriformes (Corvides)": ["♜️"],
   "Passeriformes (Muscicapida)": ["🎶"],
   "Passeriformes (Sylviida)": ["🐦", "🐦‍⬛", "🪶"],
   "Passeriformes (Passerida)": ["🎶"],
