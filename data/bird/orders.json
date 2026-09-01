@@ -129,7 +129,7 @@
     "name": "Tinamous",
     "formal": "Tinamiformes",
     "count": 46,
-    "month": null
+    "month": 3
   },
   {
     "name": "Bustards",
@@ -219,7 +219,7 @@
     "name": "Cassowaries & emu",
     "formal": "Casuariiformes",
     "count": 4,
-    "month": null
+    "month": 3
   },
   {
     "name": "Mesites",
@@ -237,13 +237,13 @@
     "name": "Ostriches",
     "formal": "Struthioniformes",
     "count": 2,
-    "month": null
+    "month": 3
   },
   {
     "name": "Rheas",
     "formal": "Rheiformes",
     "count": 2,
-    "month": null
+    "month": 3
   },
   {
     "name": "Sunbittern & kagu",
