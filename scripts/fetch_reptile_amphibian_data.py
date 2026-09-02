@@ -183,14 +183,27 @@ for fam in HYLOIDEA_FAMILIES:
 G_ALL_OTHER_FROGS = 9
 
 
+DEBUG_HTTP = os.environ.get("GBIF_DEBUG") == "1"
+
+
 def get_json(url, params=None, retries=3):
     if params:
         url = url + "?" + urllib.parse.urlencode(params)
+    if DEBUG_HTTP:
+        print(f"  [GBIF_DEBUG] GET {url}", file=sys.stderr)
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
-                return json.loads(resp.read())
-        except Exception:
+            req = urllib.request.Request(url, headers={"User-Agent": "mammal-calendar-fetch-script/1.0"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = resp.read()
+                data = json.loads(body)
+                if DEBUG_HTTP:
+                    preview = body[:500].decode("utf-8", "replace")
+                    print(f"  [GBIF_DEBUG] response count={data.get('count')} preview={preview}", file=sys.stderr)
+                return data
+        except Exception as e:
+            if DEBUG_HTTP:
+                print(f"  [GBIF_DEBUG] request error (attempt {attempt + 1}): {e!r}", file=sys.stderr)
             if attempt == retries - 1:
                 raise
             time.sleep(1.5 * (attempt + 1))
