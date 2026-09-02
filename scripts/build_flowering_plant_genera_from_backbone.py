@@ -57,47 +57,66 @@ from wcvp_group_mapping_diagnostic import (  # noqa: E402
 )
 
 
-def load_gbif_plant_genera(taxon_tsv_path):
-    """Streams GBIF's bulk Taxon.tsv once. Returns
-    (genus_name -> {taxonID, order, family, class}, family -> most-common order)
-    for every kingdom=Plantae, taxonRank=genus, taxonomicStatus=accepted row."""
+def load_gbif_plant_genera(taxon_tsv_path, wanted_genus_names):
+    """Streams GBIF's bulk Taxon.tsv once. Returns:
+      - genus_name -> {taxonID, order, family, class}, for every
+        kingdom=Plantae, taxonRank=genus, taxonomicStatus=accepted row
+      - family -> most-common order among those genus rows
+      - genus_name -> [taxonID, ...] of every kingdom=Plantae,
+        taxonRank=species row whose genericName is in wanted_genus_names
+        (species common names are far more often curated than genus-level
+        ones -- collected here, in the same pass, so a genus lacking its
+        own direct vernacular entry can still derive one from its
+        species' names; restricted to wanted_genus_names to keep this
+        from holding every plant species on Earth in memory)"""
     genus_info = {}
     family_order_votes = {}  # family -> {order: count}
+    species_ids_by_genus = {}  # genus -> [taxonID, ...]
 
     with open(taxon_tsv_path, "r", encoding="utf-8", newline="") as f:
         header = f.readline().rstrip("\n").split("\t")
         col = {name: i for i, name in enumerate(header)}
-        for required in ("taxonID", "canonicalName", "taxonRank", "taxonomicStatus", "kingdom", "class", "order", "family"):
+        for required in ("taxonID", "canonicalName", "genericName", "taxonRank", "taxonomicStatus", "kingdom", "class", "order", "family"):
             if required not in col:
                 print(f"!! Expected column '{required}' not found. Columns present: {header}", file=sys.stderr)
                 sys.exit(1)
 
-        i_id, i_name, i_rank, i_status = col["taxonID"], col["canonicalName"], col["taxonRank"], col["taxonomicStatus"]
-        i_kingdom, i_class, i_order, i_family = col["kingdom"], col["class"], col["order"], col["family"]
-        max_col = max(i_id, i_name, i_rank, i_status, i_kingdom, i_class, i_order, i_family)
+        i_id, i_name, i_generic = col["taxonID"], col["canonicalName"], col["genericName"]
+        i_rank, i_status, i_kingdom = col["taxonRank"], col["taxonomicStatus"], col["kingdom"]
+        i_class, i_order, i_family = col["class"], col["order"], col["family"]
+        max_col = max(i_id, i_name, i_generic, i_rank, i_status, i_kingdom, i_class, i_order, i_family)
 
         rows = 0
+        species_rows = 0
         for line in f:
             rows += 1
             fields = line.rstrip("\n").split("\t")
             if len(fields) <= max_col:
                 continue
-            if fields[i_kingdom] != "Plantae" or fields[i_rank] != "genus" or fields[i_status] != "accepted":
+            if fields[i_kingdom] != "Plantae" or fields[i_status] != "accepted":
                 continue
-            name = fields[i_name]
-            if not name:
-                continue
-            entry = {"taxonID": fields[i_id], "order": fields[i_order], "family": fields[i_family], "class": fields[i_class]}
-            genus_info[name] = entry
-            fam, order = entry["family"], entry["order"]
-            if fam and order:
-                family_order_votes.setdefault(fam, {})
-                family_order_votes[fam][order] = family_order_votes[fam].get(order, 0) + 1
 
-        print(f"  {rows} total rows scanned, {len(genus_info)} are Plantae/genus/accepted", file=sys.stderr)
+            if fields[i_rank] == "genus":
+                name = fields[i_name]
+                if not name:
+                    continue
+                entry = {"taxonID": fields[i_id], "order": fields[i_order], "family": fields[i_family], "class": fields[i_class]}
+                genus_info[name] = entry
+                fam, order = entry["family"], entry["order"]
+                if fam and order:
+                    family_order_votes.setdefault(fam, {})
+                    family_order_votes[fam][order] = family_order_votes[fam].get(order, 0) + 1
+            elif fields[i_rank] == "species":
+                generic = fields[i_generic]
+                if generic in wanted_genus_names:
+                    species_rows += 1
+                    species_ids_by_genus.setdefault(generic, []).append(fields[i_id])
+
+        print(f"  {rows} total rows scanned, {len(genus_info)} are Plantae/genus/accepted, "
+              f"{species_rows} are Plantae/species/accepted under a wanted genus", file=sys.stderr)
 
     family_to_order = {fam: max(votes, key=votes.get) for fam, votes in family_order_votes.items()}
-    return genus_info, family_to_order
+    return genus_info, family_to_order, species_ids_by_genus
 
 
 def load_common_names(vernacular_tsv_path, wanted_taxon_ids):
@@ -134,6 +153,34 @@ def load_common_names(vernacular_tsv_path, wanted_taxon_ids):
     return out
 
 
+def derive_names_from_species(species_ids_by_genus, common_names):
+    """For a genus with no direct genus-level vernacular name, infers one
+    from its species' common names: English common names usually follow a
+    "modifier + head noun" pattern ("Dog rose", "Rugosa rose", "California
+    poppy"), so the most frequent LAST WORD across a genus's species names
+    is a reasonable stand-in for the genus's own common name. Returns
+    {genus: derivedName}, Title Cased, for every genus with at least one
+    species that has an English common name."""
+    derived = {}
+    for genus, taxon_ids in species_ids_by_genus.items():
+        last_word_votes = {}
+        for taxon_id in taxon_ids:
+            name = common_names.get(taxon_id)
+            if not name:
+                continue
+            words = name.split()
+            if not words:
+                continue
+            word = words[-1].strip(".,;:'\"()").lower()
+            if not word:
+                continue
+            last_word_votes[word] = last_word_votes.get(word, 0) + 1
+        if last_word_votes:
+            best = max(last_word_votes, key=last_word_votes.get)
+            derived[genus] = best[:1].upper() + best[1:]
+    return derived
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--wcvp-zip", required=True)
@@ -146,7 +193,8 @@ def main():
     print(f"  {len(wcvp_genera)} accepted genera across all vascular plant families", file=sys.stderr)
 
     print(f"Reading {args.gbif_taxon} (this is a ~2GB file -- may take a minute) ...", file=sys.stderr)
-    gbif_genus_info, family_to_order = load_gbif_plant_genera(args.gbif_taxon)
+    wanted_genus_names = {g["genus"] for g in wcvp_genera}
+    gbif_genus_info, family_to_order, species_ids_by_genus = load_gbif_plant_genera(args.gbif_taxon, wanted_genus_names)
 
     counts = [0] * len(GROUPS)
     bucketed = [[] for _ in GROUPS]
@@ -183,15 +231,37 @@ def main():
         print(f"{unresolved} genera had no GBIF name match AND no family fallback available -- dropped", file=sys.stderr)
 
     print(f"\nReading {args.gbif_vernacular} (~99 MB) ...", file=sys.stderr)
+    # Both genus-level taxonIDs (direct common names) and species-level
+    # ones (for the last-word-derived fallback) are needed from the same
+    # file -- one pass covers both.
     wanted_ids = set(taxon_id_by_genus.values())
+    for ids in species_ids_by_genus.values():
+        wanted_ids.update(ids)
     common_names = load_common_names(args.gbif_vernacular, wanted_ids)
 
+    derived_names = derive_names_from_species(species_ids_by_genus, common_names)
+    print(f"{len(derived_names)} additional genera got a name derived from their species' common names", file=sys.stderr)
+
+    direct_hits = 0
+    derived_hits = 0
     for group_idx, name in enumerate(GROUPS):
         for g in bucketed[group_idx]:
             taxon_id = taxon_id_by_genus.get(g["genus"])
-            g["common"] = common_names.get(taxon_id, g["genus"]) if taxon_id else g["genus"]
+            direct = common_names.get(taxon_id) if taxon_id else None
+            if direct:
+                g["common"] = direct
+                direct_hits += 1
+            elif g["genus"] in derived_names:
+                g["common"] = derived_names[g["genus"]]
+                derived_hits += 1
+            else:
+                g["common"] = g["genus"]
         counts[group_idx] = len(bucketed[group_idx])
         print(f"  -> {name}: {counts[group_idx]} genera", file=sys.stderr)
+
+    print(f"\n{direct_hits} genera got a direct genus-level common name, "
+          f"{derived_hits} got one derived from their species, "
+          f"{sum(counts) - direct_hits - derived_hits} fell back to their scientific name", file=sys.stderr)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     unmapped_list = [(fam, order, n) for (fam, order), n in unmapped_orders.items()]
