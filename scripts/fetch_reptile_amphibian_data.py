@@ -190,19 +190,23 @@ def get_json(url, params=None, retries=3):
             time.sleep(1.5 * (attempt + 1))
 
 
-def resolve_backbone_key(name, rank):
-    """Find the GBIF Backbone Taxonomy usageKey for an exact, accepted name."""
-    data = get_json(
-        f"{API}/species/search",
-        {"q": name, "rank": rank, "datasetKey": BACKBONE_DATASET_KEY, "limit": 20},
-    )
-    for r in data.get("results", []):
-        if (
-            r.get("canonicalName", "").lower() == name.lower()
-            and r.get("taxonomicStatus") == "ACCEPTED"
-        ):
-            return r["key"]
-    raise RuntimeError(f"Could not resolve {rank} '{name}' in the GBIF backbone")
+def resolve_backbone_key(name):
+    """Find the GBIF Backbone Taxonomy usageKey for a name, via GBIF's
+    purpose-built name-resolution endpoint rather than free-text search.
+
+    Deliberately does NOT require a specific expected rank: GBIF's backbone
+    has a real quirk where Testudines and Squamata are modeled as CLASS
+    rank rather than ORDER (its way of avoiding a paraphyletic "Reptilia"),
+    while Anura/Caudata/Gymnophiona are normal ORDER rank under Amphibia.
+    Whatever rank comes back, the usageKey is what matters for the
+    highertaxonKey lookup that follows -- so it's printed for visibility,
+    not enforced.
+    """
+    data = get_json(f"{API}/species/match", {"name": name, "strict": "true"})
+    if data.get("matchType") != "EXACT" or data.get("status") != "ACCEPTED" or "usageKey" not in data:
+        raise RuntimeError(f"Could not confidently resolve '{name}' via GBIF species/match: {data}")
+    print(f"  resolved '{name}' -> usageKey {data['usageKey']} (rank: {data.get('rank')})", file=sys.stderr)
+    return data["usageKey"]
 
 
 def fetch_species_under(taxon_key):
@@ -277,7 +281,7 @@ def main():
     # ---- simple order-level groups ----
     for group_idx, order_name in [(0, "Testudines"), (1, "Crocodylia"), (10, "Caudata"), (11, "Gymnophiona")]:
         print(f"=== {GROUPS[group_idx][0]} ({order_name}) ===", file=sys.stderr)
-        key = resolve_backbone_key(order_name, "ORDER")
+        key = resolve_backbone_key(order_name)
         species_list = fetch_species_under(key)
         print(f"  {len(species_list)} species", file=sys.stderr)
         attach_common_names(species_list)
@@ -286,7 +290,7 @@ def main():
 
     # ---- Squamata, bucketed by family ----
     print("=== Squamata (bucketing by family) ===", file=sys.stderr)
-    squamata_key = resolve_backbone_key("Squamata", "ORDER")
+    squamata_key = resolve_backbone_key("Squamata")
     squamata = fetch_species_under(squamata_key)
     print(f"  {len(squamata)} total Squamata species", file=sys.stderr)
     for sp in squamata:
@@ -304,7 +308,7 @@ def main():
 
     # ---- Anura, bucketed by family ----
     print("=== Anura (bucketing by family) ===", file=sys.stderr)
-    anura_key = resolve_backbone_key("Anura", "ORDER")
+    anura_key = resolve_backbone_key("Anura")
     anura = fetch_species_under(anura_key)
     print(f"  {len(anura)} total Anura species", file=sys.stderr)
     for sp in anura:
