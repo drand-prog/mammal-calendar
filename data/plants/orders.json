@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Campanulids",
+    "formal": "Campanulids",
+    "count": 2460,
+    "month": null
+  },
+  {
+    "name": "Lamiales",
+    "formal": "Lamiales",
+    "count": 1082,
+    "month": null
+  },
+  {
+    "name": "All other Lamiids",
+    "formal": "All other Lamiids",
+    "count": 1496,
+    "month": null
+  },
+  {
+    "name": "All other Superasterids",
+    "formal": "All other Superasterids",
+    "count": 1380,
+    "month": null
+  },
+  {
+    "name": "Malvids",
+    "formal": "Malvids",
+    "count": 1655,
+    "month": null
+  },
+  {
+    "name": "Fabales",
+    "formal": "Fabales",
+    "count": 841,
+    "month": null
+  },
+  {
+    "name": "Rosales",
+    "formal": "Rosales",
+    "count": 298,
+    "month": null
+  },
+  {
+    "name": "All other Fabids + earlier-branching Eudicots",
+    "formal": "All other Fabids + earlier-branching Eudicots",
+    "count": 1531,
+    "month": null
+  },
+  {
+    "name": "Poales",
+    "formal": "Poales",
+    "count": 1111,
+    "month": null
+  },
+  {
+    "name": "Orchids",
+    "formal": "Orchids",
+    "count": 730,
+    "month": null
+  },
+  {
+    "name": "All other Monocots",
+    "formal": "All other Monocots",
+    "count": 1010,
+    "month": null
+  },
+  {
+    "name": "Magnoliids + ANA",
+    "formal": "Magnoliids + ANA",
+    "count": 280,
+    "month": null
+  }
+]
