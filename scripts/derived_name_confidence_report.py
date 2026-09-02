@@ -58,6 +58,7 @@ def main():
     parser.add_argument("--wcvp-zip", required=True)
     parser.add_argument("--gbif-taxon", required=True)
     parser.add_argument("--gbif-vernacular", required=True)
+    parser.add_argument("--sample-size", type=int, default=200)
     args = parser.parse_args()
 
     print(f"Reading {args.wcvp_zip} ...", file=sys.stderr)
@@ -111,10 +112,12 @@ def main():
     print(f"\n{single} of {total_derived} ({100*single/total_derived:.1f}%) derived names come from just ONE species "
           f"with no corroboration", file=sys.stderr)
 
-    print(f"\n=== 20 random single-vote examples (genus -> derived name, from this source name) ===", file=sys.stderr)
+    n = args.sample_size
+    print(f"\n=== {min(n, len(single_vote_examples))} random single-vote examples (genus -> derived name, from this source name) ===", file=sys.stderr)
     import random
     random.seed(1)
-    sample = random.sample(single_vote_examples, min(20, len(single_vote_examples)))
+    sample = random.sample(single_vote_examples, min(n, len(single_vote_examples)))
+    sample.sort(key=lambda t: t[1])  # group by derived word -- easier to spot patterns
     for genus, word, source in sample:
         print(f"  {genus} -> \"{word}\"  (from: \"{source}\")", file=sys.stderr)
 
