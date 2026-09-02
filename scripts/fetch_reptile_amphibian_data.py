@@ -93,7 +93,7 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "reptile")
 # Set to False for a fast first pass with no common names (everything falls
 # back to its scientific binomial) -- useful to sanity-check group counts
 # before committing to the slow per-species vernacular-name lookup below.
-FETCH_COMMON_NAMES = True
+FETCH_COMMON_NAMES = False
 COMMON_NAME_WORKERS = 16
 
 # Group indices, for readability in the family tables below.
@@ -255,6 +255,14 @@ def fetch_species_under(taxon_key):
             },
         )
         for r in data["results"]:
+            # GBIF's backbone mixes fossil/extinct taxa into ORDER/CLASS
+            # counts alongside currently-living ones (confirmed live:
+            # Testudines came back with 1,136 "ACCEPTED" species, ~3x the
+            # commonly-cited ~360 living turtle species). Every record
+            # carries its own extinct flag -- skip anything marked true.
+            # Missing/null is treated as extant rather than dropped.
+            if r.get("extinct") is True:
+                continue
             genus = r.get("genus")
             # GBIF's species/search results have no "specificEpithet" field
             # (confirmed live -- it's simply absent from the JSON, not just
