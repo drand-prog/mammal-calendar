@@ -191,7 +191,16 @@ G_ALL_OTHER_FROGS = 9
 DEBUG_HTTP = os.environ.get("GBIF_DEBUG") == "1"
 
 
-def get_json(url, params=None, retries=3):
+def get_json(url, params=None, retries=8):
+    """GET with real resilience: this run has twice been killed outright by
+    a transient Codespace network timeout (confirmed live -- not a GBIF
+    outage, since the very next attempt or a plain re-run always worked).
+    With ~21,500 species' worth of vernacular-name lookups ahead, a blip
+    lasting even a minute or two is inevitable and shouldn't torch the
+    whole run: 8 attempts with capped exponential backoff (2/4/8/16/30/30/30s)
+    rides out far longer outages than the original 3-attempt/short-backoff
+    version did.
+    """
     if params:
         url = url + "?" + urllib.parse.urlencode(params)
     if DEBUG_HTTP:
@@ -199,7 +208,7 @@ def get_json(url, params=None, retries=3):
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "mammal-calendar-fetch-script/1.0"})
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=45) as resp:
                 body = resp.read()
                 data = json.loads(body)
                 if DEBUG_HTTP:
@@ -207,11 +216,11 @@ def get_json(url, params=None, retries=3):
                     print(f"  [GBIF_DEBUG] response count={data.get('count')} preview={preview}", file=sys.stderr)
                 return data
         except Exception as e:
-            if DEBUG_HTTP:
-                print(f"  [GBIF_DEBUG] request error (attempt {attempt + 1}): {e!r}", file=sys.stderr)
             if attempt == retries - 1:
                 raise
-            time.sleep(1.5 * (attempt + 1))
+            delay = min(30, 2 ** (attempt + 1))
+            print(f"  [retry] {e!r} -- retrying in {delay}s (attempt {attempt + 1}/{retries})", file=sys.stderr)
+            time.sleep(delay)
 
 
 def resolve_backbone_key(name, rank=None):
@@ -341,54 +350,11 @@ def attach_common_names(species_list):
                 sp["common"] = f"{sp['genus']} {sp['species']}"
 
 
-def main():
-    os.makedirs(OUT_DIR, exist_ok=True)
-    counts = [0] * len(GROUPS)
-    bucketed = [[] for _ in GROUPS]
-    unmapped_families = {}
-
-    # ---- simple order-level groups ----
-    for group_idx, order_name in [(0, "Testudines"), (1, "Crocodylia"), (10, "Caudata"), (11, "Gymnophiona")]:
-        print(f"=== {GROUPS[group_idx][0]} ({order_name}) ===", file=sys.stderr)
-        key = resolve_backbone_key(order_name)
-        species_list = fetch_species_under(key)
-        print(f"  {len(species_list)} species", file=sys.stderr)
-        attach_common_names(species_list)
-        bucketed[group_idx] = species_list
-        counts[group_idx] = len(species_list)
-
-    # ---- Squamata, bucketed by family ----
-    print("=== Squamata (bucketing by family) ===", file=sys.stderr)
-    squamata_key = resolve_backbone_key("Squamata")
-    squamata = fetch_species_under(squamata_key)
-    print(f"  {len(squamata)} total Squamata species", file=sys.stderr)
-    for sp in squamata:
-        fam = sp["family"]
-        group_idx = SQUAMATA_FAMILY_TO_GROUP.get(fam)
-        if group_idx is None:
-            unmapped_families.setdefault(fam, 0)
-            unmapped_families[fam] += 1
-            continue
-        bucketed[group_idx].append(sp)
-    for group_idx in (G_SNAKES, G_GECKO_SKINK, G_TEJU_MONITOR, G_IGUANA, G_CHAMELEON):
-        print(f"  -> {GROUPS[group_idx][0]}: {len(bucketed[group_idx])} species", file=sys.stderr)
-        attach_common_names(bucketed[group_idx])
-        counts[group_idx] = len(bucketed[group_idx])
-
-    # ---- Anura, bucketed by family ----
-    print("=== Anura (bucketing by family) ===", file=sys.stderr)
-    anura_key = resolve_backbone_key("Anura", rank="order")
-    anura = fetch_species_under(anura_key)
-    print(f"  {len(anura)} total Anura species", file=sys.stderr)
-    for sp in anura:
-        fam = sp["family"]
-        group_idx = ANURA_FAMILY_TO_GROUP.get(fam, G_ALL_OTHER_FROGS)
-        bucketed[group_idx].append(sp)
-    for group_idx in (G_OLD_WORLD_FROG, G_NEW_WORLD_FROG, G_ALL_OTHER_FROGS):
-        print(f"  -> {GROUPS[group_idx][0]}: {len(bucketed[group_idx])} species", file=sys.stderr)
-        attach_common_names(bucketed[group_idx])
-        counts[group_idx] = len(bucketed[group_idx])
-
+def write_output(bucketed, counts, unmapped_families, complete):
+    """Writes whatever has been fetched so far. Called both on a normal
+    finish and (via main's finally block) after any exception, so a crash
+    partway through a multi-hour run leaves real, partial data on disk
+    instead of nothing at all."""
     if unmapped_families:
         print("\n!! Unmapped Squamata families (species skipped, not silently lost -- fix the", file=sys.stderr)
         print("!! family lists above and re-run):", file=sys.stderr)
@@ -398,7 +364,10 @@ def main():
     all_species = []
     for group_idx, species_list in enumerate(bucketed):
         for sp in species_list:
-            all_species.append([sp["common"], sp["genus"], sp["species"], group_idx])
+            # "common" is only present once attach_common_names has run for
+            # that group; a group killed mid-fetch may hold raw dicts still.
+            common = sp.get("common", f"{sp['genus']} {sp['species']}")
+            all_species.append([common, sp["genus"], sp["species"], group_idx])
 
     orders = [
         {"name": name, "formal": formal, "count": counts[i], "month": None}
@@ -414,14 +383,74 @@ def main():
         json.dump(orders, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
-    print(f"\nWrote {len(all_species)} species to {species_path}", file=sys.stderr)
-    print(f"Wrote {len(orders)} groups to {orders_path}", file=sys.stderr)
+    status = "Wrote" if complete else "PARTIAL run -- wrote"
+    print(f"\n{status} {len(all_species)} species to {species_path}", file=sys.stderr)
+    print(f"Wrote {len(orders)} groups (counts only reflect what finished) to {orders_path}", file=sys.stderr)
     missing_common = sum(1 for s in all_species if s[0] == f"{s[1]} {s[2]}")
     print(
         f"{missing_common} of {len(all_species)} species have no common name "
         f"and fell back to their scientific binomial.",
         file=sys.stderr,
     )
+    if not complete:
+        print("\nRe-run the script to pick up where this left off is NOT automatic --", file=sys.stderr)
+        print("it starts over from Testudines. But the data above is real; if the", file=sys.stderr)
+        print("failure was a transient network blip, just try again.", file=sys.stderr)
+
+
+def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
+    counts = [0] * len(GROUPS)
+    bucketed = [[] for _ in GROUPS]
+    unmapped_families = {}
+
+    try:
+        # ---- simple order-level groups ----
+        for group_idx, order_name in [(0, "Testudines"), (1, "Crocodylia"), (10, "Caudata"), (11, "Gymnophiona")]:
+            print(f"=== {GROUPS[group_idx][0]} ({order_name}) ===", file=sys.stderr)
+            key = resolve_backbone_key(order_name)
+            species_list = fetch_species_under(key)
+            print(f"  {len(species_list)} species", file=sys.stderr)
+            attach_common_names(species_list)
+            bucketed[group_idx] = species_list
+            counts[group_idx] = len(species_list)
+
+        # ---- Squamata, bucketed by family ----
+        print("=== Squamata (bucketing by family) ===", file=sys.stderr)
+        squamata_key = resolve_backbone_key("Squamata")
+        squamata = fetch_species_under(squamata_key)
+        print(f"  {len(squamata)} total Squamata species", file=sys.stderr)
+        for sp in squamata:
+            fam = sp["family"]
+            group_idx = SQUAMATA_FAMILY_TO_GROUP.get(fam)
+            if group_idx is None:
+                unmapped_families.setdefault(fam, 0)
+                unmapped_families[fam] += 1
+                continue
+            bucketed[group_idx].append(sp)
+        for group_idx in (G_SNAKES, G_GECKO_SKINK, G_TEJU_MONITOR, G_IGUANA, G_CHAMELEON):
+            print(f"  -> {GROUPS[group_idx][0]}: {len(bucketed[group_idx])} species", file=sys.stderr)
+            attach_common_names(bucketed[group_idx])
+            counts[group_idx] = len(bucketed[group_idx])
+
+        # ---- Anura, bucketed by family ----
+        print("=== Anura (bucketing by family) ===", file=sys.stderr)
+        anura_key = resolve_backbone_key("Anura", rank="order")
+        anura = fetch_species_under(anura_key)
+        print(f"  {len(anura)} total Anura species", file=sys.stderr)
+        for sp in anura:
+            fam = sp["family"]
+            group_idx = ANURA_FAMILY_TO_GROUP.get(fam, G_ALL_OTHER_FROGS)
+            bucketed[group_idx].append(sp)
+        for group_idx in (G_OLD_WORLD_FROG, G_NEW_WORLD_FROG, G_ALL_OTHER_FROGS):
+            print(f"  -> {GROUPS[group_idx][0]}: {len(bucketed[group_idx])} species", file=sys.stderr)
+            attach_common_names(bucketed[group_idx])
+            counts[group_idx] = len(bucketed[group_idx])
+    except BaseException:
+        write_output(bucketed, counts, unmapped_families, complete=False)
+        raise
+    else:
+        write_output(bucketed, counts, unmapped_families, complete=True)
 
 
 if __name__ == "__main__":
