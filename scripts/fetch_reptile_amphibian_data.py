@@ -256,9 +256,20 @@ def fetch_species_under(taxon_key):
         )
         for r in data["results"]:
             genus = r.get("genus")
-            epithet = r.get("specificEpithet")
+            # GBIF's species/search results have no "specificEpithet" field
+            # (confirmed live -- it's simply absent from the JSON, not just
+            # empty). The "species" field holds the full "Genus epithet"
+            # binomial instead, so the epithet has to be split back out.
+            full_name = r.get("species") or r.get("canonicalName")
             family = r.get("family")
-            if not genus or not epithet:
+            if not genus or not full_name:
+                continue
+            if full_name.startswith(genus + " "):
+                epithet = full_name[len(genus) + 1:].strip()
+            else:
+                parts = full_name.split(" ", 1)
+                epithet = parts[1].strip() if len(parts) > 1 else None
+            if not epithet:
                 continue
             out.append({"key": r["key"], "genus": genus, "species": epithet, "family": family})
         offset += limit
