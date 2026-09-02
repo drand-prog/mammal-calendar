@@ -220,8 +220,14 @@ def resolve_backbone_key(name):
     Whatever rank comes back, the usageKey is what matters for the
     highertaxonKey lookup that follows -- so it's printed for visibility,
     not enforced.
+
+    Passes kingdom=Animalia as a disambiguating hint: "Anura" alone is a
+    homonym (GBIF has multiple unrelated taxa by that name across different
+    kingdoms), so species/match returns matchType=NONE with a "Multiple
+    equal matches" note without it -- confirmed live. Every taxon this
+    script resolves is an animal, so this is always safe to pass.
     """
-    data = get_json(f"{API}/species/match", {"name": name, "strict": "true"})
+    data = get_json(f"{API}/species/match", {"name": name, "kingdom": "Animalia", "strict": "true"})
     if data.get("matchType") != "EXACT" or data.get("status") != "ACCEPTED" or "usageKey" not in data:
         raise RuntimeError(f"Could not confidently resolve '{name}' via GBIF species/match: {data}")
     print(f"  resolved '{name}' -> usageKey {data['usageKey']} (rank: {data.get('rank')})", file=sys.stderr)
