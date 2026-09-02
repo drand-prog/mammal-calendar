@@ -153,14 +153,27 @@ def load_common_names(vernacular_tsv_path, wanted_taxon_ids):
     return out
 
 
+# Top-level plant-category words that carry no distinguishing information
+# on their own -- e.g. Eucommia deriving "Plant" from "Woody plant", or
+# Heteropyxis deriving "Tree" from "Lavender Tree". Confirmed live against
+# a 200-example real sample: these were the only REPEATABLE failure
+# pattern found (a handful of true one-off oddities like "Bagasse" or
+# "Afternoon" also turned up, but those aren't part of any detectable
+# pattern a stoplist could catch without also blocking legitimate words,
+# so they're accepted as residual noise rather than chased further).
+GENERIC_STOPLIST = {"plant", "tree", "bush", "shrub", "herb", "vine", "flower", "species"}
+
+
 def derive_names_from_species(species_ids_by_genus, common_names):
     """For a genus with no direct genus-level vernacular name, infers one
     from its species' common names: English common names usually follow a
     "modifier + head noun" pattern ("Dog rose", "Rugosa rose", "California
     poppy"), so the most frequent LAST WORD across a genus's species names
-    is a reasonable stand-in for the genus's own common name. Returns
-    {genus: derivedName}, Title Cased, for every genus with at least one
-    species that has an English common name."""
+    is a reasonable stand-in for the genus's own common name -- skipping
+    any word in GENERIC_STOPLIST in favor of the next-most-frequent one,
+    since a category word like "Plant" adds nothing a reader doesn't
+    already know. Returns {genus: derivedName}, Title Cased, for every
+    genus with at least one non-generic word among its species' names."""
     derived = {}
     for genus, taxon_ids in species_ids_by_genus.items():
         last_word_votes = {}
@@ -175,8 +188,9 @@ def derive_names_from_species(species_ids_by_genus, common_names):
             if not word:
                 continue
             last_word_votes[word] = last_word_votes.get(word, 0) + 1
-        if last_word_votes:
-            best = max(last_word_votes, key=last_word_votes.get)
+        candidates = [w for w in sorted(last_word_votes, key=last_word_votes.get, reverse=True) if w not in GENERIC_STOPLIST]
+        if candidates:
+            best = candidates[0]
             derived[genus] = best[:1].upper() + best[1:]
     return derived
 
