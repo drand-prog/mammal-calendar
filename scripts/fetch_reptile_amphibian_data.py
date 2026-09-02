@@ -209,25 +209,37 @@ def get_json(url, params=None, retries=3):
             time.sleep(1.5 * (attempt + 1))
 
 
-def resolve_backbone_key(name):
+def resolve_backbone_key(name, rank=None):
     """Find the GBIF Backbone Taxonomy usageKey for a name, via GBIF's
     purpose-built name-resolution endpoint rather than free-text search.
 
-    Deliberately does NOT require a specific expected rank: GBIF's backbone
-    has a real quirk where Testudines and Squamata are modeled as CLASS
-    rank rather than ORDER (its way of avoiding a paraphyletic "Reptilia"),
-    while Anura/Caudata/Gymnophiona are normal ORDER rank under Amphibia.
-    Whatever rank comes back, the usageKey is what matters for the
-    highertaxonKey lookup that follows -- so it's printed for visibility,
-    not enforced.
+    Deliberately does NOT require a specific expected rank by default:
+    GBIF's backbone has a real quirk where Testudines and Squamata are
+    modeled as CLASS rank rather than ORDER (its way of avoiding a
+    paraphyletic "Reptilia"), while Anura/Caudata/Gymnophiona are normal
+    ORDER rank under Amphibia. Whatever rank comes back, the usageKey is
+    what matters for the highertaxonKey lookup that follows -- so it's
+    printed for visibility, not enforced.
 
-    Passes kingdom=Animalia as a disambiguating hint: "Anura" alone is a
-    homonym (GBIF has multiple unrelated taxa by that name across different
-    kingdoms), so species/match returns matchType=NONE with a "Multiple
-    equal matches" note without it -- confirmed live. Every taxon this
-    script resolves is an animal, so this is always safe to pass.
+    Default query passes kingdom=Animalia as a disambiguating hint: "Anura"
+    alone is a homonym (GBIF has multiple unrelated taxa by that name
+    across different kingdoms), so species/match returns matchType=NONE
+    with a "Multiple equal matches" note without it -- confirmed live.
+
+    BUT for "Anura" specifically, adding kingdom=Animalia overcorrects: it
+    comes back as matchType=HIGHERRANK against kingdom Animalia itself
+    (usageKey 1) rather than the order -- also confirmed live. The rank=
+    override param exists for this one case: passing rank="order" (with
+    neither kingdom nor strict) is the exact query shape proven to return
+    a clean matchType=EXACT for Anura (usageKey 952) in this script's very
+    first live diagnostic. Only pass it where a plain kingdom hint has
+    already been shown to fail for that specific name.
     """
-    data = get_json(f"{API}/species/match", {"name": name, "kingdom": "Animalia", "strict": "true"})
+    if rank:
+        params = {"name": name, "rank": rank}
+    else:
+        params = {"name": name, "kingdom": "Animalia", "strict": "true"}
+    data = get_json(f"{API}/species/match", params)
     if data.get("matchType") != "EXACT" or data.get("status") != "ACCEPTED" or "usageKey" not in data:
         raise RuntimeError(f"Could not confidently resolve '{name}' via GBIF species/match: {data}")
     print(f"  resolved '{name}' -> usageKey {data['usageKey']} (rank: {data.get('rank')})", file=sys.stderr)
@@ -360,7 +372,7 @@ def main():
 
     # ---- Anura, bucketed by family ----
     print("=== Anura (bucketing by family) ===", file=sys.stderr)
-    anura_key = resolve_backbone_key("Anura")
+    anura_key = resolve_backbone_key("Anura", rank="order")
     anura = fetch_species_under(anura_key)
     print(f"  {len(anura)} total Anura species", file=sys.stderr)
     for sp in anura:
