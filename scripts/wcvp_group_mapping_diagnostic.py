@@ -57,7 +57,11 @@ G_MALVIDS, G_FABALES, G_ROSALES, G_OTHER_FABIDS = 4, 5, 6, 7
 G_POALES, G_ORCHIDS, G_OTHER_MONOCOTS, G_MAGNOLIIDS_ANA = 8, 9, 10, 11
 
 ORDER_TO_GROUP = {}
-for o in ["Aquifoliales", "Escalloniales", "Bruniales", "Paracryphiales", "Apiales", "Dipsacales", "Asterales"]:
+for o in ["Aquifoliales", "Escalloniales", "Bruniales", "Paracryphiales", "Apiales", "Dipsacales", "Asterales",
+          # Found live as "unmapped" on the first real run -- a small order
+          # (17 genera) usually treated as part of the Aquifoliales alliance
+          # within Campanulids; APG doesn't always formally split it out.
+          "Cardiopteridales"]:
     ORDER_TO_GROUP[o] = G_CAMPANULIDS
 ORDER_TO_GROUP["Lamiales"] = G_LAMIALES
 for o in ["Icacinales", "Metteniusales", "Garryales", "Gentianales", "Boraginales", "Vahliales", "Solanales"]:
