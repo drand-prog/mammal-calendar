@@ -411,9 +411,13 @@ def main():
             key = resolve_backbone_key(order_name)
             species_list = fetch_species_under(key)
             print(f"  {len(species_list)} species", file=sys.stderr)
-            attach_common_names(species_list)
+            # Record before attaching common names: if attach_common_names is
+            # interrupted partway through, these species (sans real common
+            # names for whichever weren't done yet) are still saved rather
+            # than lost entirely.
             bucketed[group_idx] = species_list
             counts[group_idx] = len(species_list)
+            attach_common_names(species_list)
 
         # ---- Squamata, bucketed by family ----
         print("=== Squamata (bucketing by family) ===", file=sys.stderr)
