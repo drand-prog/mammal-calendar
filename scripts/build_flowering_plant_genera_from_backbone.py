@@ -164,23 +164,45 @@ def load_common_names(vernacular_tsv_path, wanted_taxon_ids):
 GENERIC_STOPLIST = {"plant", "tree", "bush", "shrub", "herb", "vine", "flower", "species"}
 
 
+def _capitalize_first(s):
+    return s[:1].upper() + s[1:] if s else s
+
+
 def derive_names_from_species(species_ids_by_genus, common_names):
     """For a genus with no direct genus-level vernacular name, infers one
-    from its species' common names: English common names usually follow a
-    "modifier + head noun" pattern ("Dog rose", "Rugosa rose", "California
-    poppy"), so the most frequent LAST WORD across a genus's species names
-    is a reasonable stand-in for the genus's own common name -- skipping
-    any word in GENERIC_STOPLIST in favor of the next-most-frequent one,
-    since a category word like "Plant" adds nothing a reader doesn't
-    already know. Returns {genus: derivedName}, Title Cased, for every
-    genus with at least one non-generic word among its species' names."""
+    from its species' common names.
+
+    If exactly one of the genus's species has an English common name,
+    there's nothing to reconcile -- that species' FULL name is used as-is
+    (e.g. Dionaea's only named species gives "Venus Flytrap", not just
+    "Flytrap"; truncating loses real information for no reason when
+    there's no second name to disambiguate against). The generic-word
+    stoplist doesn't apply here either: a full phrase like "Woody Plant"
+    still describes something (growth habit) even though its last word
+    alone wouldn't.
+
+    Otherwise (2+ named species, likely disagreeing), English common
+    names usually follow a "modifier + head noun" pattern ("Dog rose",
+    "Rugosa rose", "California poppy"), so the most frequent LAST WORD
+    across the genus's species names is a reasonable stand-in for the
+    genus's own common name -- skipping any word in GENERIC_STOPLIST in
+    favor of the next-most-frequent one, since a bare category word like
+    "Plant" adds nothing a reader doesn't already know, and picking one
+    arbitrary species' full name out of several disagreeing ones would be
+    less justified than the shared fragment they do agree on.
+
+    Returns {genus: derivedName}, Title Cased."""
     derived = {}
     for genus, taxon_ids in species_ids_by_genus.items():
+        named = [common_names[tid] for tid in taxon_ids if common_names.get(tid)]
+        if not named:
+            continue
+        if len(named) == 1:
+            derived[genus] = _capitalize_first(named[0])
+            continue
+
         last_word_votes = {}
-        for taxon_id in taxon_ids:
-            name = common_names.get(taxon_id)
-            if not name:
-                continue
+        for name in named:
             words = name.split()
             if not words:
                 continue
@@ -190,8 +212,7 @@ def derive_names_from_species(species_ids_by_genus, common_names):
             last_word_votes[word] = last_word_votes.get(word, 0) + 1
         candidates = [w for w in sorted(last_word_votes, key=last_word_votes.get, reverse=True) if w not in GENERIC_STOPLIST]
         if candidates:
-            best = candidates[0]
-            derived[genus] = best[:1].upper() + best[1:]
+            derived[genus] = _capitalize_first(candidates[0])
     return derived
 
 
