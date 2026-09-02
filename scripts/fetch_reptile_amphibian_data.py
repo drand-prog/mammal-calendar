@@ -3,31 +3,42 @@
 Fetch reptile + amphibian species from GBIF's backbone taxonomy and sort
 them into the 12 groups decided for The Reptile & Amphibian Ephemeris.
 
-v2: rewritten after a live diagnostic run against api.gbif.org surfaced two
-problems with the original approach (see git history for the v1 script if
-curious):
+Three real bugs got worked out against live api.gbif.org diagnostics before
+landing on this approach (see git history if curious):
 
-  1. species/search without a datasetKey filter matches names across dozens
-     of different checklists in GBIF's Checklist Bank, not just the GBIF
-     Backbone Taxonomy -- so resolving e.g. "Testudines" picked a usageKey
-     from an unrelated dataset, and highertaxonKey-filtering species search
-     against that foreign key legitimately matched zero real records. Every
-     query below is now pinned to BACKBONE_DATASET_KEY.
+  1. species/search's free-text `q=` matching isn't a reliable way to find a
+     taxon's backbone usageKey -- it can match names from other checklists
+     in GBIF's Checklist Bank, and even with a dataset filter added it can
+     still fail to surface an exact match. GBIF has a purpose-built endpoint
+     for exactly this, species/match (their name-to-backbone-taxon
+     resolver), which is what resolve_backbone_key uses instead.
 
-  2. GBIF's backbone simply does not model "Dibamia", "Scincoidea",
-     "Lacertoidea", "Anguimorpha", "Iguania", "Ranoidea", or "Hyloidea" as
-     named taxa of their own -- those are cladistic groupings above family
-     rank, not a rank GBIF's backbone carries for these lineages. Family is
-     the lowest rank GBIF is guaranteed to model reliably, so instead of
-     resolving each clade by name, this version fetches all of ORDER
-     Squamata and all of ORDER Anura just once each (both simple, reliable,
-     order-level fetches) and sorts every species into a group by its own
-     `family` field, via the FAMILY_TO_GROUP lookup below.
+  2. GBIF's backbone doesn't model "Dibamia", "Scincoidea", "Lacertoidea",
+     "Anguimorpha", "Iguania", "Ranoidea", or "Hyloidea" as named taxa of
+     their own -- those are cladistic groupings above family rank that
+     GBIF's backbone simply doesn't carry for these lineages. Family is the
+     lowest rank GBIF is guaranteed to model reliably, so instead of
+     resolving each clade by name, this fetches every species under
+     Squamata and under Anura just once each and sorts them into a group by
+     each species' own `family` field, via the FAMILY_TO_GROUP lookup below.
+
+  3. GBIF's backbone has a real quirk where Testudines and Squamata are
+     modeled as CLASS rank rather than ORDER -- its way of avoiding a
+     paraphyletic "Reptilia" -- while Anura/Caudata/Gymnophiona are normal
+     ORDER rank under Amphibia. resolve_backbone_key doesn't require or
+     enforce an expected rank because of this; it trusts whatever rank
+     species/match reports back.
+
+  4. Once a genuinely correct backbone usageKey is in hand, adding a
+     datasetKey filter to the species-fetch call drops the result count to
+     zero anyway -- confirmed live, even for species whose own JSON reports
+     that exact datasetKey. fetch_species_under intentionally filters by
+     highertaxonKey alone; see its docstring before changing that.
 
 Groups (see FAMILY_TO_GROUP for exactly which families land where):
 
-  Tortoises/turtles   -> order Testudines, in full
-  Crocodilians        -> order Crocodylia, in full
+  Tortoises/turtles   -> Testudines, in full
+  Crocodilians        -> Crocodylia, in full
   Snakes              -> Squamata families in SNAKE_FAMILIES
   Geckos & skinks     -> Squamata families in GECKO_SKINK_FAMILIES
   Tejus & monitors    -> Squamata families in TEJU_MONITOR_FAMILIES
@@ -78,11 +89,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 API = "https://api.gbif.org/v1"
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "reptile")
-
-# The GBIF Backbone Taxonomy's own dataset key -- stable, well-known.
-# Pinning every query to it is what fixes the "0 species" bug: without it,
-# species/search matches names across unrelated checklists too.
-BACKBONE_DATASET_KEY = "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c"
 
 # Set to False for a fast first pass with no common names (everything falls
 # back to its scientific binomial) -- useful to sanity-check group counts
@@ -210,8 +216,17 @@ def resolve_backbone_key(name):
 
 
 def fetch_species_under(taxon_key):
-    """All accepted, species-rank taxa under a given backbone key, within the
-    backbone dataset. Returns a list of dicts: genus, species, family."""
+    """All accepted, species-rank taxa under a given backbone key. Returns a
+    list of dicts: genus, species, family.
+
+    Deliberately does NOT filter by datasetKey, even though taxon_key comes
+    from the backbone: confirmed live that adding datasetKey=<backbone key>
+    here drops the result count to zero, even for species records that
+    themselves report that exact datasetKey in their own JSON. Whatever the
+    precise mechanics of GBIF's index are, highertaxonKey alone is what
+    actually works -- don't add datasetKey back in without re-verifying
+    against a live query first.
+    """
     out = []
     offset = 0
     limit = 300
@@ -222,7 +237,6 @@ def fetch_species_under(taxon_key):
                 "highertaxonKey": taxon_key,
                 "rank": "SPECIES",
                 "status": "ACCEPTED",
-                "datasetKey": BACKBONE_DATASET_KEY,
                 "limit": limit,
                 "offset": offset,
             },
