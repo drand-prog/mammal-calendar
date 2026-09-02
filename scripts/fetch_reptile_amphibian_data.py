@@ -93,7 +93,7 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "reptile")
 # Set to False for a fast first pass with no common names (everything falls
 # back to its scientific binomial) -- useful to sanity-check group counts
 # before committing to the slow per-species vernacular-name lookup below.
-FETCH_COMMON_NAMES = False
+FETCH_COMMON_NAMES = True
 COMMON_NAME_WORKERS = 16
 
 # Group indices, for readability in the family tables below.
@@ -125,6 +125,11 @@ SNAKE_FAMILIES = {
     "Tropidophiidae", "Uropeltidae", "Viperidae", "Crotalidae",
     "Xenodermidae", "Xenopeltidae", "Anomalepididae", "Gerrhopilidae",
     "Leptotyphlopidae", "Typhlopidae", "Xenotyphlopidae",
+    # Found live as "unmapped" on the first full run -- all three are real,
+    # legitimate snake families the initial list simply missed.
+    "Pseudoxyrhophiidae",  # Malagasy snakes
+    "Cyclocoridae",        # Philippine snakes, recently split out
+    "Xenophidiidae",       # spine-jawed snakes
 }
 GECKO_SKINK_FAMILIES = {
     "Carphodactylidae", "Dibamidae", "Diplodactylidae", "Eublepharidae",
