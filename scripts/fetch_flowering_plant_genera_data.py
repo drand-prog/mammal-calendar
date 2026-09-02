@@ -71,8 +71,14 @@ API = "https://api.gbif.org/v1"
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "plants")
 
 FETCH_COMMON_NAMES = True
-COMMON_NAME_WORKERS = 16
-FAMILY_RESOLVE_WORKERS = 8
+# Lower than the reptile script's 16/8: confirmed live that a single isolated
+# request to api.gbif.org succeeds fine even when 16-way concurrent traffic
+# gets nothing but timeouts for many minutes straight -- that shape (one-off
+# works, sustained parallel load doesn't) points at a concurrency-triggered
+# rate limit rather than a real outage, so this trades wall-clock time for
+# actually making progress instead of retrying into a wall.
+COMMON_NAME_WORKERS = 4
+FAMILY_RESOLVE_WORKERS = 4
 
 
 def load_genera(wcvp_zip_path):
