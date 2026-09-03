@@ -105,6 +105,13 @@ export function initReptileCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, B
     return d <= 26 ? String.fromCharCode(64 + d) : EXTENDED_DAY_CODES[d - 27];
   }
 
+  // The tuatara is the sole living species of Rhynchocephalia, an order
+  // distinct from -- not a member of -- any of the 12 squamate/amphibian
+  // groups above, so no group's month can ever be the right home for it.
+  // It's pinned to February 29 outright, regardless of its (nominal, for
+  // display purposes only) order's assigned month.
+  function isTuatara(entry){ return entry[1] === "Sphenodon" && entry[2] === "punctatus"; }
+
   // Returns null fields when the species' order has no month yet -- callers
   // check r.month === null and render a "not yet assigned" state instead of
   // a date.
@@ -112,12 +119,20 @@ export function initReptileCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, B
     var order = ORDERS[entry[3]];
     var species = entry[2];
     var genus = entry[1];
+    var hm = hourMinuteOf(species);
+    if (isTuatara(entry)){
+      return {
+        common: entry[0], genus: genus, species: species,
+        order: order, month: 1, day: 29,
+        hour: hm.hour, minute: hm.minute,
+        fact: entry[4] || null
+      };
+    }
     var month = order.month;
     if (month == null){
       return { common: entry[0], genus: genus, species: species, order: order, month: null, day: null, hour: null, minute: null, fact: entry[4] || null };
     }
     var day = dayOf(species, month);
-    var hm = hourMinuteOf(species);
     return {
       common: entry[0], genus: genus, species: species,
       order: order, month: month,
@@ -131,7 +146,7 @@ export function initReptileCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, B
   // re-checking order.month on every pass.
   var ASSIGNED = [];
   function refreshAssigned(){
-    ASSIGNED = DATA.filter(function(entry){ return ORDERS[entry[3]].month != null; });
+    ASSIGNED = DATA.filter(function(entry){ return isTuatara(entry) || ORDERS[entry[3]].month != null; });
   }
   refreshAssigned();
 
@@ -368,8 +383,8 @@ export function initReptileCalendarApp(SPECIES_DATA, ORDER_DATA, INITIAL_FAQS, B
       return;
     }
     matches.forEach(function(entry){
-      var order = ORDERS[entry[3]];
-      resultsBox.appendChild(buildResultRow(entry, order.month != null ? MONTH_NAMES[order.month] : "Unassigned"));
+      var r = compute(entry);
+      resultsBox.appendChild(buildResultRow(entry, r.month != null ? MONTH_NAMES[r.month] : "Unassigned"));
     });
     if (result.total > matches.length){
       var more = document.createElement("div");
