@@ -55,8 +55,7 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   // rather than hand-maintaining a second group mapping -- so a month
   // card's badge can be any of the individual emoji matched within its
   // group (Poales: rice, corn, bamboo, pineapple...), not just one fixed
-  // per-group pick. This is the ONLY source for month-card emoji -- no
-  // decorative per-group stand-ins outside this real, verified set.
+  // per-group pick.
   var GENUS_EMOJI_BY_GROUP = ORDERS.map(function(){ return []; });
   DATA.forEach(function(entry){
     var e = GENUS_EMOJI[entry[1]];
@@ -65,13 +64,19 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     GENUS_EMOJI_BY_GROUP[entry[2]] = GENUS_EMOJI_BY_GROUP[entry[2]].concat(glyphs);
   });
 
-  // Rotates through a month's pool once per calendar day (same glyph all
-  // day, every visitor) rather than reshuffling on every page load.
-  function dayOfYear(d){
-    var start = new Date(d.getFullYear(), 0, 0);
-    return Math.floor((d - start) / 86400000);
-  }
-  var ROTATION_INDEX = dayOfYear(new Date());
+  // A handful of group-level (not genus-specific) additions, layered on top
+  // of the real genus matches above -- "All other Monocots" carries
+  // Arecales (palms) alongside its lilies/tulips/alliums, and no single
+  // genus in that order has its own GENUS_EMOJI entry, so 🌴 wouldn't show
+  // up there otherwise even though it's a genuinely fitting glyph for the
+  // order as a whole.
+  var EXTRA_GROUP_EMOJI = {
+    "All other Monocots": ["🌴"]
+  };
+  ORDERS.forEach(function(o, i){
+    var extra = EXTRA_GROUP_EMOJI[o.name];
+    if (extra) GENUS_EMOJI_BY_GROUP[i] = GENUS_EMOJI_BY_GROUP[i].concat(extra);
+  });
 
   function pickEmoji(month){
     var pool = [];
@@ -79,8 +84,8 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
       if (o.month !== month) return;
       pool = pool.concat(GENUS_EMOJI_BY_GROUP[i]);
     });
-    if (!pool.length) return null; // nothing assigned to this month yet, or no group here has a real match
-    return pool[ROTATION_INDEX % pool.length];
+    if (!pool.length) return null; // nothing assigned to this month yet
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   // ---------- Letter math (identical rules to the mammal calendar, run on
