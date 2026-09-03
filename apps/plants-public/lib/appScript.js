@@ -13,7 +13,6 @@
 // GENUS-level calendar, so every place those apps' day/hour/minute letter
 // math ran on a species name, this runs on the genus name itself instead.
 // eslint-disable
-import { ORDER_EMOJI } from "./orderEmoji";
 import { GENUS_EMOJI } from "./genusEmoji";
 
 export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROWSE_PROMPT, MONTH_DESCRIPTIONS) {
@@ -42,26 +41,46 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   // [common name, Genus, orderIndex] -- no species epithet at this level.
   var DATA = GENERA_DATA;
 
+  // A genus's GENUS_EMOJI entry is sometimes several glyphs glued together
+  // (Oryza: "🌾🍚🍶") -- split each into its own individual emoji so the
+  // month-card pool draws from single glyphs, not multi-emoji clusters.
+  // \p{Extended_Pictographic} matches one emoji's base codepoint; the
+  // trailing ️? keeps a variation selector attached to its base
+  // (Capsicum's "🌶️" is a bare pepper + VS16 -- splitting naively on code
+  // points would strand the VS16 as its own, invisible "glyph").
+  var EMOJI_SPLIT_RE = /\p{Extended_Pictographic}️?/gu;
+
   // Every real, tight genus->emoji match (see lib/genusEmoji.ts) that
   // actually belongs to each group, gathered by scanning the real data once
   // rather than hand-maintaining a second group mapping -- so a month
-  // card's badge can be any genus in its group with a real match (Poales:
-  // rice, corn, bamboo, pineapple...), not just one fixed per-group pick.
+  // card's badge can be any of the individual emoji matched within its
+  // group (Poales: rice, corn, bamboo, pineapple...), not just one fixed
+  // per-group pick. This is the ONLY source for month-card emoji -- no
+  // decorative per-group stand-ins outside this real, verified set.
   var GENUS_EMOJI_BY_GROUP = ORDERS.map(function(){ return []; });
   DATA.forEach(function(entry){
     var e = GENUS_EMOJI[entry[1]];
-    if (e) GENUS_EMOJI_BY_GROUP[entry[2]].push(e);
+    if (!e) return;
+    var glyphs = e.match(EMOJI_SPLIT_RE) || [e];
+    GENUS_EMOJI_BY_GROUP[entry[2]] = GENUS_EMOJI_BY_GROUP[entry[2]].concat(glyphs);
   });
+
+  // Rotates through a month's pool once per calendar day (same glyph all
+  // day, every visitor) rather than reshuffling on every page load.
+  function dayOfYear(d){
+    var start = new Date(d.getFullYear(), 0, 0);
+    return Math.floor((d - start) / 86400000);
+  }
+  var ROTATION_INDEX = dayOfYear(new Date());
 
   function pickEmoji(month){
     var pool = [];
     ORDERS.forEach(function(o, i){
       if (o.month !== month) return;
-      var options = ORDER_EMOJI[o.formal] || [];
-      pool = pool.concat(options, GENUS_EMOJI_BY_GROUP[i]);
+      pool = pool.concat(GENUS_EMOJI_BY_GROUP[i]);
     });
-    if (!pool.length) return null; // nothing assigned to this month yet
-    return pool[Math.floor(Math.random() * pool.length)];
+    if (!pool.length) return null; // nothing assigned to this month yet, or no group here has a real match
+    return pool[ROTATION_INDEX % pool.length];
   }
 
   // ---------- Letter math (identical rules to the mammal calendar, run on
