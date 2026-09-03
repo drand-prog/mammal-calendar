@@ -436,14 +436,19 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
 
   // ---------- Specimen photo (fetched live from Wikipedia on selection) ----------
   // A bare genus article is frequently a short taxobox stub with no photo
-  // -- especially for a monotypic genus, where Wikipedia commonly keeps
-  // the real, fully-illustrated article under the SPECIES instead (often
-  // titled by common name -- Dionaea's only photo lives on "Venus
-  // flytrap", not "Dionaea"). Rather than requiring precomputed
-  // genus->species data (which would mean re-running the whole GBIF/WCVP
-  // bulk pipeline just for this), this asks Wikipedia's own full-text
-  // search which real article it thinks a genus name refers to, and only
-  // falls back to that when the genus's own page has no thumbnail.
+  // -- especially for a monotypic or little-known genus, where Wikipedia
+  // keeps the real, fully-illustrated article under the common name
+  // instead (Rosa's photo lives on "Rose", not "Rosa"; Dionaea's on
+  // "Venus flytrap"). So: try the genus title first, then the common
+  // name as a direct title (a precise, redirect-following lookup -- no
+  // relevance ranking involved), and only as a last resort fall back to
+  // Wikipedia's full-text search.
+  //
+  // That search step is deliberately keyed on the COMMON name, never the
+  // genus: searching "Acer" (Maple's genus) surfaces Acer Inc., the
+  // Taiwanese computer company, ahead of anything botanical -- confirmed
+  // live. "Maple" doesn't have that problem, and gets a real hit via the
+  // direct-title step anyway before search is ever needed.
   var photoRequestSeq = 0;
 
   function fetchSummary(title){
@@ -488,19 +493,32 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
       return true;
     }
 
+    function tryCommonNameThenSearch(){
+      var hasDistinctCommonName = r.common && r.common.toLowerCase() !== r.genus.toLowerCase();
+      var afterCommonName = hasDistinctCommonName ? fetchSummary(r.common) : Promise.resolve(null);
+      afterCommonName.then(function(commonData){
+        if (reqId !== photoRequestSeq) return;
+        if (hasDistinctCommonName && show(r.common, commonData)) return;
+        // Neither the genus nor the common name is a page with its own
+        // photo -- last resort is Wikipedia's own full-text search,
+        // keyed on the common name (see note above on why never the
+        // genus).
+        var searchQuery = hasDistinctCommonName ? r.common : r.genus;
+        searchTopHitTitle(searchQuery).then(function(hitTitle){
+          if (reqId !== photoRequestSeq) return;
+          if (!hitTitle){ container.className = "specimen-photo"; return; }
+          fetchSummary(hitTitle).then(function(hitData){
+            if (reqId !== photoRequestSeq) return;
+            if (!show(hitTitle, hitData)) container.className = "specimen-photo";
+          });
+        });
+      });
+    }
+
     fetchSummary(r.genus).then(function(data){
       if (reqId !== photoRequestSeq) return;
       if (show(r.genus, data)) return;
-      // Genus page had no photo -- try whatever real article Wikipedia's
-      // own search surfaces for the name (commonly the species page).
-      searchTopHitTitle(r.genus).then(function(hitTitle){
-        if (reqId !== photoRequestSeq) return;
-        if (!hitTitle){ container.className = "specimen-photo"; return; }
-        fetchSummary(hitTitle).then(function(hitData){
-          if (reqId !== photoRequestSeq) return;
-          if (!show(hitTitle, hitData)) container.className = "specimen-photo";
-        });
-      });
+      tryCommonNameThenSearch();
     });
   }
 
