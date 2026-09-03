@@ -14,6 +14,7 @@
 // math ran on a species name, this runs on the genus name itself instead.
 // eslint-disable
 import { ORDER_EMOJI } from "./orderEmoji";
+import { GENUS_EMOJI } from "./genusEmoji";
 
 export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROWSE_PROMPT, MONTH_DESCRIPTIONS) {
 "use strict";
@@ -126,14 +127,15 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   function compute(entry){
     var order = ORDERS[entry[2]];
     var genus = entry[1];
+    var emoji = GENUS_EMOJI[genus] || null;
     var month = order.month;
     if (month == null){
-      return { common: entry[0], genus: genus, order: order, month: null, day: null, hour: null, minute: null };
+      return { common: entry[0], genus: genus, emoji: emoji, order: order, month: null, day: null, hour: null, minute: null };
     }
     var day = dayOf(genus, month);
     var hm = hourMinuteOf(genus);
     return {
-      common: entry[0], genus: genus,
+      common: entry[0], genus: genus, emoji: emoji,
       order: order, month: month,
       day: day, hour: hm.hour, minute: hm.minute
     };
@@ -360,7 +362,8 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     row.innerHTML =
       '<span class="rn"><span class="common"></span><span class="sci"></span></span>' +
       '<span class="tag"></span>';
-    row.querySelector(".common").textContent = entry[0];
+    var emoji = GENUS_EMOJI[entry[1]];
+    row.querySelector(".common").textContent = (emoji ? emoji + " " : "") + entry[0];
     row.querySelector(".sci").textContent = entry[1];
     row.querySelector(".tag").textContent = rightLabel;
     row.addEventListener("click", function(){ selectEntry(entry); });
@@ -534,7 +537,7 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     specimen.classList.add("show");
     specimen.classList.toggle("pending", r.month == null);
 
-    document.getElementById("outGreeting").textContent = "Happy " + r.common + " Day!";
+    document.getElementById("outGreeting").textContent = (r.emoji ? r.emoji + " " : "") + "Happy " + r.common + " Day!";
     document.getElementById("outSci").textContent = r.genus;
 
     if (r.month != null){
