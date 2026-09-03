@@ -154,6 +154,17 @@ password screen — not required, since the real gate is the server-side
 password check, but cheap extra friction against anyone just poking at the
 URL.
 
+**Known quirk — rapid admin saves can stall auto-deploy.** A burst of many
+admin-panel saves in quick succession (each one its own commit + push) has
+twice left a public project's Production deployment silently pinned several
+commits behind `main`, with no error shown anywhere — Vercel just stops
+picking up the webhook events partway through the burst. If a public site
+looks stale after a flurry of admin edits, check the project's Deployments
+tab: if the top "Production" row's commit hash is older than `main`'s tip,
+that's this. The fix is any new push (even an unrelated one, to any of the
+four apps) — it builds off the *current* tip of `main`, so it catches up
+every skipped commit at once, not just the newest one.
+
 ## Local development
 
 Each app is independent — install and run them separately:
