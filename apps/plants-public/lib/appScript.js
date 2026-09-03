@@ -411,7 +411,33 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   }
 
   // ---------- Specimen photo (fetched live from Wikipedia on selection) ----------
+  // A bare genus article is frequently a short taxobox stub with no photo
+  // -- especially for a monotypic genus, where Wikipedia commonly keeps
+  // the real, fully-illustrated article under the SPECIES instead (often
+  // titled by common name -- Dionaea's only photo lives on "Venus
+  // flytrap", not "Dionaea"). Rather than requiring precomputed
+  // genus->species data (which would mean re-running the whole GBIF/WCVP
+  // bulk pipeline just for this), this asks Wikipedia's own full-text
+  // search which real article it thinks a genus name refers to, and only
+  // falls back to that when the genus's own page has no thumbnail.
   var photoRequestSeq = 0;
+
+  function fetchSummary(title){
+    return fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .catch(function(){ return null; });
+  }
+
+  function searchTopHitTitle(query){
+    var url = "https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(query);
+    return fetch(url)
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(data){
+        var hit = data && data.query && data.query.search && data.query.search[0];
+        return hit ? hit.title : null;
+      })
+      .catch(function(){ return null; });
+  }
 
   function loadSpecimenPhoto(r){
     var reqId = ++photoRequestSeq;
@@ -424,27 +450,34 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     img.alt = "";
     credit.setAttribute("tabindex", "-1");
 
-    var title = r.genus;
-    fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title))
-      .then(function(res){ return res.ok ? res.json() : null; })
-      .then(function(data){
+    function show(title, data){
+      var src = data && data.thumbnail && data.thumbnail.source;
+      if (!src) return false;
+      var pageUrl = (data.content_urls && data.content_urls.desktop && data.content_urls.desktop.page) ||
+        ("https://en.wikipedia.org/wiki/" + encodeURIComponent(title));
+      credit.href = pageUrl;
+      credit.removeAttribute("tabindex");
+      img.alt = "Photo of " + r.common + " (" + r.genus + ")";
+      img.src = src;
+      container.className = "specimen-photo loaded";
+      currentWikiUrl = pageUrl; // once resolved, click-through follows the richer page too
+      return true;
+    }
+
+    fetchSummary(r.genus).then(function(data){
+      if (reqId !== photoRequestSeq) return;
+      if (show(r.genus, data)) return;
+      // Genus page had no photo -- try whatever real article Wikipedia's
+      // own search surfaces for the name (commonly the species page).
+      searchTopHitTitle(r.genus).then(function(hitTitle){
         if (reqId !== photoRequestSeq) return;
-        var src = data && data.thumbnail && data.thumbnail.source;
-        if (!src){
-          container.className = "specimen-photo";
-          return;
-        }
-        credit.href = (data.content_urls && data.content_urls.desktop && data.content_urls.desktop.page) ||
-          ("https://en.wikipedia.org/wiki/" + encodeURIComponent(title));
-        credit.removeAttribute("tabindex");
-        img.alt = "Photo of " + r.common + " (" + r.genus + ")";
-        img.src = src;
-        container.className = "specimen-photo loaded";
-      })
-      .catch(function(){
-        if (reqId !== photoRequestSeq) return;
-        container.className = "specimen-photo";
+        if (!hitTitle){ container.className = "specimen-photo"; return; }
+        fetchSummary(hitTitle).then(function(hitData){
+          if (reqId !== photoRequestSeq) return;
+          if (!show(hitTitle, hitData)) container.className = "specimen-photo";
+        });
       });
+    });
   }
 
   // ---------- "Add to Calendar" (.ics download) ----------
@@ -517,7 +550,10 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   function downloadIcs(entry){
     var r = compute(entry);
     if (r.month == null) return; // no date yet -- button is hidden in this state anyway
-    var wikiUrl = "https://en.wikipedia.org/wiki/" + encodeURIComponent(r.genus);
+    // currentWikiUrl tracks whichever Wikipedia page is actually showing
+    // for this entry right now -- the resolved species page once photo
+    // lookup finds one, the bare genus page otherwise.
+    var wikiUrl = currentWikiUrl || ("https://en.wikipedia.org/wiki/" + encodeURIComponent(r.genus));
     var blob = new Blob([buildIcs(r, wikiUrl)], { type: "text/calendar;charset=utf-8" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
