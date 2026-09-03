@@ -32,17 +32,6 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   // admin panel's "Order months" section, or null until then.
   var ORDERS = ORDER_DATA;
 
-  function pickEmoji(month){
-    var pool = [];
-    ORDERS.forEach(function(o){
-      if (o.month !== month) return;
-      var options = ORDER_EMOJI[o.formal] || [];
-      pool = pool.concat(options);
-    });
-    if (!pool.length) return null; // nothing assigned to this month yet
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
   // ---------- Genus data ----------
   // Sourced from Kew's World Checklist of Vascular Plants + GBIF's backbone
   // taxonomy -- see scripts/build_flowering_plant_genera_from_backbone.py
@@ -52,6 +41,28 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
 
   // [common name, Genus, orderIndex] -- no species epithet at this level.
   var DATA = GENERA_DATA;
+
+  // Every real, tight genus->emoji match (see lib/genusEmoji.ts) that
+  // actually belongs to each group, gathered by scanning the real data once
+  // rather than hand-maintaining a second group mapping -- so a month
+  // card's badge can be any genus in its group with a real match (Poales:
+  // rice, corn, bamboo, pineapple...), not just one fixed per-group pick.
+  var GENUS_EMOJI_BY_GROUP = ORDERS.map(function(){ return []; });
+  DATA.forEach(function(entry){
+    var e = GENUS_EMOJI[entry[1]];
+    if (e) GENUS_EMOJI_BY_GROUP[entry[2]].push(e);
+  });
+
+  function pickEmoji(month){
+    var pool = [];
+    ORDERS.forEach(function(o, i){
+      if (o.month !== month) return;
+      var options = ORDER_EMOJI[o.formal] || [];
+      pool = pool.concat(options, GENUS_EMOJI_BY_GROUP[i]);
+    });
+    if (!pool.length) return null; // nothing assigned to this month yet
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 
   // ---------- Letter math (identical rules to the mammal calendar, run on
   // the genus name itself rather than a species epithet) ----------
@@ -127,15 +138,14 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
   function compute(entry){
     var order = ORDERS[entry[2]];
     var genus = entry[1];
-    var emoji = GENUS_EMOJI[genus] || null;
     var month = order.month;
     if (month == null){
-      return { common: entry[0], genus: genus, emoji: emoji, order: order, month: null, day: null, hour: null, minute: null };
+      return { common: entry[0], genus: genus, order: order, month: null, day: null, hour: null, minute: null };
     }
     var day = dayOf(genus, month);
     var hm = hourMinuteOf(genus);
     return {
-      common: entry[0], genus: genus, emoji: emoji,
+      common: entry[0], genus: genus,
       order: order, month: month,
       day: day, hour: hm.hour, minute: hm.minute
     };
@@ -362,8 +372,7 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     row.innerHTML =
       '<span class="rn"><span class="common"></span><span class="sci"></span></span>' +
       '<span class="tag"></span>';
-    var emoji = GENUS_EMOJI[entry[1]];
-    row.querySelector(".common").textContent = (emoji ? emoji + " " : "") + entry[0];
+    row.querySelector(".common").textContent = entry[0];
     row.querySelector(".sci").textContent = entry[1];
     row.querySelector(".tag").textContent = rightLabel;
     row.addEventListener("click", function(){ selectEntry(entry); });
@@ -537,7 +546,7 @@ export function initPlantCalendarApp(GENERA_DATA, ORDER_DATA, INITIAL_FAQS, BROW
     specimen.classList.add("show");
     specimen.classList.toggle("pending", r.month == null);
 
-    document.getElementById("outGreeting").textContent = (r.emoji ? r.emoji + " " : "") + "Happy " + r.common + " Day!";
+    document.getElementById("outGreeting").textContent = "Happy " + r.common + " Day!";
     document.getElementById("outSci").textContent = r.genus;
 
     if (r.month != null){
