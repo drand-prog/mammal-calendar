@@ -9,7 +9,7 @@
     "name": "Crocodilians",
     "formal": "Crocodylia",
     "count": 37,
-    "month": null
+    "month": 0
   },
   {
     "name": "Snakes",
@@ -21,7 +21,7 @@
     "name": "Geckos & skinks",
     "formal": "Dibamia + Gekkota + Scincoidea (Squamata families)",
     "count": 4379,
-    "month": null
+    "month": 6
   },
   {
     "name": "Tejus & monitors",
