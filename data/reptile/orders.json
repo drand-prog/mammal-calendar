@@ -27,13 +27,13 @@
     "name": "Tejus & monitors",
     "formal": "Lacertoidea + Anguimorpha (Squamata families)",
     "count": 1399,
-    "month": null
+    "month": 10
   },
   {
     "name": "Iguanas",
     "formal": "Iguania minus Chamaeleonidae (Squamata families)",
     "count": 1961,
-    "month": null
+    "month": 7
   },
   {
     "name": "Chameleons",
@@ -45,7 +45,7 @@
     "name": "Old World frogs",
     "formal": "Ranoidea (Anura families)",
     "count": 3027,
-    "month": null
+    "month": 1
   },
   {
     "name": "New World frogs",
@@ -57,18 +57,18 @@
     "name": "All other frogs",
     "formal": "Anura (all other families)",
     "count": 1019,
-    "month": null
+    "month": 4
   },
   {
     "name": "Salamanders",
     "formal": "Caudata",
     "count": 804,
-    "month": null
+    "month": 9
   },
   {
     "name": "Caecilians",
     "formal": "Gymnophiona",
     "count": 219,
-    "month": null
+    "month": 8
   }
 ]
