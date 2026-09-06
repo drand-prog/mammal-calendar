@@ -29,8 +29,12 @@ export const ORDER_EMOJI: Record<string, string[]> = {
   // No chameleon glyph exists either -- palette is an aesthetic nod to their
   // famous color-changing, not a taxonomic hint.
   Chamaeleonidae: ["🎨"],
-  "Ranoidea (Anura families)": ["🐸"],
-  "Hyloidea (Anura families)": ["🐸"],
+  // February's badge -- a nod to amplexus (the mating embrace frogs are
+  // named for), not a taxonomic hint.
+  "Ranoidea (Anura families)": ["❤️"],
+  // April's badge -- a nod to spring peepers and other tree frogs calling,
+  // not a taxonomic hint.
+  "Hyloidea (Anura families)": ["🎶"],
   "Anura (all other families)": ["🐸"],
   // No salamander/newt glyph exists -- fire is the classic folklore
   // association (salamanders were long believed to live in, or be born
