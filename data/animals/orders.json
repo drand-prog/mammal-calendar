@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Porifera + Ctenophora + Placozoa",
+    "formal": "Porifera + Ctenophora + Placozoa",
+    "count": 573,
+    "month": null
+  },
+  {
+    "name": "Cnidaria",
+    "formal": "Cnidaria",
+    "count": 810,
+    "month": null
+  },
+  {
+    "name": "Insecta",
+    "formal": "Insecta",
+    "count": 2774,
+    "month": null
+  },
+  {
+    "name": "Crustacea",
+    "formal": "Crustacea",
+    "count": 1612,
+    "month": null
+  },
+  {
+    "name": "All other Arthropoda",
+    "formal": "All other Arthropoda",
+    "count": 1801,
+    "month": null
+  },
+  {
+    "name": "Tardigrada + Onychophora",
+    "formal": "Tardigrada + Onychophora",
+    "count": 40,
+    "month": null
+  },
+  {
+    "name": "Cycloneuralia",
+    "formal": "Cycloneuralia",
+    "count": 341,
+    "month": null
+  },
+  {
+    "name": "Mollusca",
+    "formal": "Mollusca",
+    "count": 2287,
+    "month": null
+  },
+  {
+    "name": "Annelida",
+    "formal": "Annelida",
+    "count": 221,
+    "month": null
+  },
+  {
+    "name": "Platyhelminthes",
+    "formal": "Platyhelminthes",
+    "count": 518,
+    "month": null
+  },
+  {
+    "name": "Xenacoelomorpha + Echinodermata + Hemichordata",
+    "formal": "Xenacoelomorpha + Echinodermata + Hemichordata",
+    "count": 903,
+    "month": null
+  },
+  {
+    "name": "All other Spiralia",
+    "formal": "All other Spiralia",
+    "count": 1150,
+    "month": null
+  }
+]
