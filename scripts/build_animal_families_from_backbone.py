@@ -25,18 +25,22 @@ scripts/build_flowering_plant_genera_from_backbone.py for the original
 design notes on why that heuristic works the way it does.
 
 KNOWN UNVERIFIED SPOTS (flagged as diagnostic output below, not guessed
-away) -- confirm against real GBIF field values before trusting the
-group assignment fully:
-  - Crustacea in this scheme means "the traditional non-hexapod
-    crustacean classes" (Malacostraca, Branchiopoda, Copepoda,
-    Ostracoda, Thecostraca, Remipedia, Cephalocarida, ...) -- GBIF's
-    exact class-name spellings for these are asserted here, not
-    confirmed live yet.
-  - Xenacoelomorpha may appear in GBIF as a single phylum, or as two
-    separate phyla (Xenoturbellida + Acoelomorpha/Acoela) -- both
-    spellings are mapped to group 10 below, but this needs confirming.
-  - Bryozoa may appear as "Bryozoa" or "Ectoprocta" -- both mapped to
-    group 11 below, same caveat.
+away). CONFIRMED against a real run of the full backbone on 2026-09-06
+(13,390 accepted Animalia/non-Chordata families total):
+  - The Crustacea class list, and the Xenacoelomorpha/Bryozoa spelling
+    questions raised in an earlier draft of this docstring, all came back
+    clean except one gap: Tantulocarida (5 families) was a real GBIF
+    class missing from CRUSTACEAN_CLASSES, now added.
+  - Three real phyla surfaced by that run weren't in the original mapping
+    at all: Sipuncula (6 families, now folded into Annelida -- modern
+    work nests peanut worms inside it) and Dicyemida + Orthonectida
+    (5 families combined, "Mesozoa", now folded into "All other Spiralia"
+    -- reduced/parasitic lineages molecular evidence currently points
+    into Spiralia). See PHYLUM_TO_GROUP for both.
+  - 360 families (2.7% of the total) simply have no phylum in GBIF's own
+    data at all (blank field, likely incertae sedis or fossil placeholder
+    entries) -- these are dropped for real, not a bug to chase; there's
+    no data to assign them a group with.
 Any family whose phylum/class isn't recognized is NOT silently dropped
 or guessed into a group -- it's counted and printed under "unmapped"
 so the real GBIF vocabulary can be checked before it's trusted.
@@ -94,15 +98,27 @@ PHYLUM_TO_GROUP = {
     "Bryozoa": 11, "Ectoprocta": 11, "Phoronida": 11,
     "Gnathostomulida": 11, "Micrognathozoa": 11, "Rotifera": 11,
     "Acanthocephala": 11,  # modern classification nests this inside Rotifera
+    # Confirmed live against the real backbone (2026-09-06 run): GBIF's
+    # taxonomy still carries these as their own "phylum" field even though
+    # modern molecular work resolves both differently than a classic
+    # standalone phylum would suggest.
+    "Sipuncula": 8,  # peanut worms -- now understood to nest inside Annelida
+    "Dicyemida": 11, "Orthonectida": 11,  # "Mesozoa" -- molecular evidence points to a reduced/parasitic Spiralia lineage, not a basal animal
 }
 
 # Provisional -- see module docstring. Printed diagnostics will show every
 # real class actually found under phylum Arthropoda so this can be
 # corrected before the data is trusted.
+#
+# Confirmed live against the real backbone (2026-09-06 run): every class
+# below except Tantulocarida was already correct; Thecostraca/Ichthyostraca/
+# Pentastomida never actually appear as GBIF class values (harmless to keep
+# listed -- they just never match) and Tantulocarida (5 families) was
+# missing and fell through to "All other Arthropoda" until added here.
 CRUSTACEAN_CLASSES = {
     "Malacostraca", "Branchiopoda", "Copepoda", "Ostracoda",
     "Thecostraca", "Maxillopoda", "Remipedia", "Cephalocarida",
-    "Ichthyostraca", "Pentastomida",
+    "Ichthyostraca", "Pentastomida", "Tantulocarida",
 }
 
 CHORDATA_PHYLUM = "Chordata"
