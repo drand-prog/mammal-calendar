@@ -74,6 +74,18 @@ apps/admin/                    the mammal admin tool — no wheel/species code a
 apps/bird-public/, apps/bird-admin/   mirror the two above, reading/writing
                                        data/bird/*.json instead — see "The Bird
                                        Ephemeris" section below for what differs
+
+  animals/                        animal family data, shared between apps/animals-public and apps/animals-admin
+    families.json                   all 13,030 non-chordate family entries (public reads only)
+    orders.json                     the 12 groups' month assignments — animals-admin edits this
+    faqs.json                       FAQ list — animals-admin edits this
+    content.json                    site text — animals-admin edits this
+
+apps/animals-public/, apps/animals-admin/   mirror apps/public and apps/admin,
+                                       reading/writing data/animals/*.json
+                                       instead, at FAMILY rank rather than
+                                       species — see "The Animal Family
+                                       Ephemeris" section below for what differs
 ```
 
 The calendar-grid/search/browse/heatmap logic in `apps/public/lib/appScript.js` is
@@ -238,3 +250,79 @@ order's name, formal name, or species count. The server loads its own copy
 of `data/bird/orders.json`, overwrites just the `month` field per order,
 and commits that — so a tampered request can change what month an order is
 assigned to and nothing else.
+
+## The Animal Family Ephemeris
+
+Search any non-chordate animal family by common or scientific name to find
+the day, hour, and minute it's assigned — month by group, date and time by
+the letters of its own name. Built the same way as the mammal and bird
+calendars above, at a different taxonomic rank: **family**, not species.
+
+### Why family rank, and why 12 phylum/class groups
+
+Mammals and birds are covered by their own separate calendars already, so
+this one deliberately excludes Chordata entirely and covers everything
+else in Kingdom Animalia — sponges, jellyfish, insects, crustaceans,
+mollusks, worms of every unrelated phylum, sea stars, and dozens of much
+obscurer groups. At **species** rank that's millions of rows spanning wildly
+uneven research coverage; **family** rank keeps it to a tractable, complete
+13,030 entries pulled straight from GBIF's backbone taxonomy, with no
+species epithet in the letter math the way mammal/bird/reptile have — day,
+hour, and minute all run on the family name itself.
+
+Non-chordate animal families don't split into a natural 12-month scheme
+any more cleanly than birds' 46 orders did, so `data/animals/orders.json`
+defines its own 12 groups by phylum and class, sized to keep any one group
+from dominating the calendar the way Passeriformes dominates birds:
+
+| Group | Families |
+|---|---:|
+| Porifera + Ctenophora + Placozoa | 573 |
+| Cnidaria | 810 |
+| Insecta | 2,774 |
+| Crustacea | 1,612 |
+| All other Arthropoda | 1,801 |
+| Tardigrada + Onychophora | 40 |
+| Cycloneuralia | 341 |
+| Mollusca | 2,287 |
+| Annelida | 221 |
+| Platyhelminthes | 518 |
+| Xenacoelomorpha + Echinodermata + Hemichordata | 903 |
+| All other Spiralia | 1,150 |
+
+See `PHYLUM_TO_GROUP` in `scripts/build_animal_families_from_backbone.py`
+for exactly how each family was resolved to a group, including the
+real-data fixes found after the first live run (Tantulocarida folded into
+Crustacea; Sipuncula into Annelida; Dicyemida and Orthonectida into "All
+other Spiralia"). Every group starts with `month` set to `null` — same
+gradual-fill-in model as the bird calendar's "Order months" — so a family
+doesn't appear on the public calendar until its group is assigned a month
+in `apps/animals-admin`.
+
+### How it works
+
+- **Month** comes from the family's group, once assigned (animals-admin →
+  Group months).
+- **Day** comes from the family name's first letter (A = 1st … Z = 26th),
+  unless the name contains one of nine rarer letter patterns anywhere in
+  it — a bare Q/X/Y/Z, or a doubled N/O/P/R/S — in which case that pattern
+  wins outright, reaching days a single starting letter can't. Same rule as
+  the reptile/amphibian calendar.
+- **Hour** and **minute** both come from adding up the letter values
+  (A=1…Z=26) of every letter after the first, then splitting that sum's
+  digits — the last digit is the minute, whatever's left is the hour, wrapped
+  with `% 24` since family names run long enough (up to 25 letters, e.g.
+  *Parallelepipedorhynchidae*) to occasionally overflow a 24-hour clock
+  otherwise.
+- Common names are derived, not hand-curated: for families with no common
+  name of their own, the build script looks at the common names of the
+  family's member species (when GBIF's vernacular-names data has any) and
+  "borrows" the most frequent last word across them — the same trick the
+  flowering-plant-genera calendar uses to derive genus-level common names
+  from species names. A family with no derivable common name at all falls
+  back to displaying its scientific name for both.
+- Family and species data comes from [GBIF's backbone
+  taxonomy](https://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c)
+  — see `scripts/build_animal_families_from_backbone.py` for exactly how
+  the 13,030 families and their common names were built; see
+  `data/animals/families.json`.
