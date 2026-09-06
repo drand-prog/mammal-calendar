@@ -18,6 +18,14 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+// The only group counted by genus rather than family -- see
+// GENUS_RANK_PHYLA in scripts/build_animal_families_from_backbone.py.
+// Every other group's `count` is a family count.
+const GENUS_RANK_GROUP_FORMAL = "Tardigrada + Onychophora";
+function unitFor(order: OrderEntry): string {
+  return order.formal === GENUS_RANK_GROUP_FORMAL ? "genera" : "families";
+}
+
 const CONTENT_FIELDS: {
   key: keyof ContentFields;
   label: string;
@@ -160,10 +168,10 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
   const totalSpecies = initialOrders.reduce((sum, o) => sum + o.count, 0);
   const assignedSpecies = initialOrders.reduce((sum, o, i) => sum + (months[i] != null ? o.count : 0), 0);
 
-  // Families assigned to each of the 12 months, recomputed as selects change
-  // -- lets an admin see at a glance which months are still empty or
-  // lopsided (Insecta and Mollusca alone are well over a third of all
-  // families) before saving.
+  // Families (or, for Tardigrada + Onychophora, genera) assigned to each of
+  // the 12 months, recomputed as selects change -- lets an admin see at a
+  // glance which months are still empty or lopsided (Insecta and Mollusca
+  // alone are well over a third of all families) before saving.
   const perMonth = useMemo(() => {
     const totals = new Array(12).fill(0) as number[];
     const orderCounts = new Array(12).fill(0) as number[];
@@ -205,16 +213,17 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
       <p className="section-note">
         Non-chordate animal families split into a fixed {initialOrders.length} groups by phylum and class
         (Porifera + Ctenophora + Placozoa, Cnidaria, Insecta, Crustacea, a catch-all for the rest of
-        Arthropoda, Tardigrada + Onychophora, Cycloneuralia, Mollusca, Annelida, Platyhelminthes,
-        Xenacoelomorpha + Echinodermata + Hemichordata, and a catch-all for the rest of Spiralia — see
-        PHYLUM_TO_GROUP in scripts/build_animal_families_from_backbone.py for exactly how each family maps
-        to a group). Each one needs assigning to a month by hand before its families show up on the public
-        calendar. More than one group can share a month.
+        Arthropoda, Tardigrada + Onychophora (counted by genus, not family — the phylum pair only has 40
+        families combined), Cycloneuralia, Mollusca, Annelida, Platyhelminthes, Xenacoelomorpha +
+        Echinodermata + Hemichordata, and a catch-all for the rest of Spiralia — see PHYLUM_TO_GROUP and
+        GENUS_RANK_PHYLA in scripts/build_animal_families_from_backbone.py for exactly how each entry maps
+        to a group). Each one needs assigning to a month by hand before its families or genera show up on
+        the public calendar. More than one group can share a month.
       </p>
 
       <p className="orders-summary">
         <b>{assignedOrders}</b> / {initialOrders.length} groups assigned &middot;{" "}
-        <b>{assignedSpecies.toLocaleString()}</b> / {totalSpecies.toLocaleString()} families covered
+        <b>{assignedSpecies.toLocaleString()}</b> / {totalSpecies.toLocaleString()} families/genera covered
       </p>
 
       <div className="month-tally">
@@ -231,7 +240,7 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
           <thead>
             <tr>
               <th>Group</th>
-              <th>Families</th>
+              <th>Count</th>
               <th>Month</th>
             </tr>
           </thead>
@@ -242,7 +251,10 @@ function OrdersSection({ initialOrders }: { initialOrders: OrderEntry[] }) {
                   <div className="ord-name">{o.name}</div>
                   <div className="ord-formal">{o.formal}</div>
                 </td>
-                <td className="ord-count">{o.count.toLocaleString()}</td>
+                <td>
+                  <span className="ord-count">{o.count.toLocaleString()}</span>
+                  <div className="ord-formal">{unitFor(o)}</div>
+                </td>
                 <td>
                   <select
                     className="input ord-select"
